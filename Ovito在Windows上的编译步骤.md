@@ -14,3 +14,5 @@ cmake .. -DCMAKE_INSTALL_PREFIX=C:\Users\liuyujie714\Desktop\OVITO -DOVITO_BUILD
 /SUBSYSTEM:windows /ENTRY:mainCRTStartup
 ```
 
+
+
