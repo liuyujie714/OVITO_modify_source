@@ -2,7 +2,7 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "Ovito3.10.6"
-!define PRODUCT_VERSION ""
+!define PRODUCT_VERSION " "
 !define PRODUCT_PUBLISHER "XXX"
 !define PRODUCT_WEB_SITE "https://www.ovito.org/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\ovito.exe"
@@ -20,7 +20,7 @@
 ; Welcome page
 !insertmacro MUI_PAGE_WELCOME
 ; License page
-!insertmacro MUI_PAGE_LICENSE "ovito-v3.10.6\LICENSE.txt"
+!insertmacro MUI_PAGE_LICENSE "ovito-v3.10.6-modified-source\LICENSE.txt"
 ; Directory page
 !insertmacro MUI_PAGE_DIRECTORY
 ; Instfiles page
@@ -47,6 +47,10 @@ ShowUnInstDetails show
 Section "MainSection" SEC01
   SetOutPath "$INSTDIR"
   SetOverwrite try
+  File "OVITO\avcodec-61.dll"
+  File "OVITO\avfilter-10.dll"
+  File "OVITO\avformat-61.dll"
+  File "OVITO\avutil-59.dll"
   File "OVITO\Core.ovito.dll"
   File "OVITO\CorrelationFunctionPlugin.ovito.dll"
   File "OVITO\CorrelationFunctionPluginGui.ovito.dll"
@@ -130,6 +134,7 @@ Section "MainSection" SEC01
   File "OVITO\plugins\tls\qopensslbackend.dll"
   File "OVITO\plugins\tls\qschannelbackend.dll"
   SetOutPath "$INSTDIR"
+  File "OVITO\postproc-58.dll"
   File "OVITO\qt.conf"
   File "OVITO\Qt6Core.dll"
   File "OVITO\Qt6Gui.dll"
@@ -144,8 +149,11 @@ Section "MainSection" SEC01
   File "OVITO\StdModGui.ovito.dll"
   File "OVITO\StdObj.ovito.dll"
   File "OVITO\StdObjGui.ovito.dll"
+  File "OVITO\swresample-5.dll"
+  File "OVITO\swscale-8.dll"
   File "OVITO\VoroTop.ovito.dll"
   File "OVITO\VoroTopGui.ovito.dll"
+  File "OVITO\zlib.dll"
 SectionEnd
 
 Section -AdditionalIcons
@@ -179,8 +187,11 @@ FunctionEnd
 Section Uninstall
   Delete "$INSTDIR\${PRODUCT_NAME}.url"
   Delete "$INSTDIR\uninst.exe"
+  Delete "$INSTDIR\zlib.dll"
   Delete "$INSTDIR\VoroTopGui.ovito.dll"
   Delete "$INSTDIR\VoroTop.ovito.dll"
+  Delete "$INSTDIR\swscale-8.dll"
+  Delete "$INSTDIR\swresample-5.dll"
   Delete "$INSTDIR\StdObjGui.ovito.dll"
   Delete "$INSTDIR\StdObj.ovito.dll"
   Delete "$INSTDIR\StdModGui.ovito.dll"
@@ -195,6 +206,7 @@ Section Uninstall
   Delete "$INSTDIR\Qt6Gui.dll"
   Delete "$INSTDIR\Qt6Core.dll"
   Delete "$INSTDIR\qt.conf"
+  Delete "$INSTDIR\postproc-58.dll"
   Delete "$INSTDIR\plugins\tls\qschannelbackend.dll"
   Delete "$INSTDIR\plugins\tls\qopensslbackend.dll"
   Delete "$INSTDIR\plugins\tls\qcertonlybackend.dll"
@@ -264,6 +276,10 @@ Section Uninstall
   Delete "$INSTDIR\CorrelationFunctionPluginGui.ovito.dll"
   Delete "$INSTDIR\CorrelationFunctionPlugin.ovito.dll"
   Delete "$INSTDIR\Core.ovito.dll"
+  Delete "$INSTDIR\avutil-59.dll"
+  Delete "$INSTDIR\avformat-61.dll"
+  Delete "$INSTDIR\avfilter-10.dll"
+  Delete "$INSTDIR\avcodec-61.dll"
 
   Delete "$SMPROGRAMS\Ovito3.10.6\Uninstall.lnk"
   Delete "$SMPROGRAMS\Ovito3.10.6\Website.lnk"
