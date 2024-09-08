@@ -1,0 +1,69 @@
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2023 OVITO GmbH, Germany
+//
+//  This file is part of OVITO (Open Visualization Tool).
+//
+//  OVITO is free software; you can redistribute it and/or modify it either under the
+//  terms of the GNU General Public License version 3 as published by the Free Software
+//  Foundation (the "GPL") or, at your option, under the terms of the MIT License.
+//  If you do not alter this notice, a recipient may use your version of this
+//  file under either the GPL or the MIT License.
+//
+//  You should have received a copy of the GPL along with this program in a
+//  file LICENSE.GPL.txt.  You should have received a copy of the MIT License along
+//  with this program in a file LICENSE.MIT.txt
+//
+//  This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
+//  either express or implied. See the GPL or the MIT License for the specific language
+//  governing rights and limitations.
+//
+////////////////////////////////////////////////////////////////////////////////////////
+
+#pragma once
+
+
+#include <ovito/core/Core.h>
+#include <ovito/core/dataset/data/DataObject.h>
+#include <ovito/core/dataset/pipeline/PipelineNode.h>
+
+namespace Ovito {
+
+/**
+ * \brief A data object holding a primitive value (e.g. a number or a string).
+ */
+class OVITO_CORE_EXPORT AttributeDataObject : public DataObject
+{
+    OVITO_CLASS(AttributeDataObject)
+    Q_CLASSINFO("DisplayName", "Attribute");
+
+public:
+
+    /// Constructor.
+    Q_INVOKABLE AttributeDataObject(ObjectInitializationFlags flags) : DataObject(flags) {}
+
+    /// Constructor.
+    AttributeDataObject(ObjectInitializationFlags flags, QVariant value) : DataObject(flags), _value(std::move(value)) {}
+
+    /// Returns the display title of this object.
+    virtual QString objectTitle() const override {
+        if(!identifier().isEmpty())
+            return identifier();
+        return DataObject::objectTitle();
+    }
+
+protected:
+
+    /// Saves the class' contents to the given stream.
+    virtual void saveToStream(ObjectSaveStream& stream, bool excludeRecomputableData) const override;
+
+    /// Loads the class' contents from the given stream.
+    virtual void loadFromStream(ObjectLoadStream& stream) override;
+
+private:
+
+    /// The stored attribute value.
+    DECLARE_RUNTIME_PROPERTY_FIELD(QVariant, value, setValue);
+};
+
+}   // End of namespace

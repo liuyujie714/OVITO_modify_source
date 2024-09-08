@@ -1,0 +1,120 @@
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2023 OVITO GmbH, Germany
+//
+//  This file is part of OVITO (Open Visualization Tool).
+//
+//  OVITO is free software; you can redistribute it and/or modify it either under the
+//  terms of the GNU General Public License version 3 as published by the Free Software
+//  Foundation (the "GPL") or, at your option, under the terms of the MIT License.
+//  If you do not alter this notice, a recipient may use your version of this
+//  file under either the GPL or the MIT License.
+//
+//  You should have received a copy of the GPL along with this program in a
+//  file LICENSE.GPL.txt.  You should have received a copy of the MIT License along
+//  with this program in a file LICENSE.MIT.txt
+//
+//  This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
+//  either express or implied. See the GPL or the MIT License for the specific language
+//  governing rights and limitations.
+//
+////////////////////////////////////////////////////////////////////////////////////////
+
+#pragma once
+
+
+#include <ovito/gui/desktop/GUI.h>
+#include <ovito/core/oo/OvitoObject.h>
+#include <ovito/core/dataset/pipeline/PipelineFlowState.h>
+#include <ovito/core/dataset/scene/Pipeline.h>
+
+namespace Ovito {
+
+/**
+ * \brief Abstract base class for applets shown in the data inspector.
+ */
+class OVITO_GUI_EXPORT DataInspectionApplet : public OvitoObject
+{
+    OVITO_CLASS(DataInspectionApplet)
+
+public:
+
+    /// Returns the key value for this applet that is used for ordering the applet tabs.
+    virtual int orderingKey() const { return std::numeric_limits<int>::max(); }
+
+    /// Determines whether the given pipeline data contains data that can be displayed by this applet.
+    virtual bool appliesTo(const DataCollection& data);
+
+    /// Determines the list of data objects that are displayed by the applet.
+    virtual std::vector<ConstDataObjectPath> getDataObjectPaths() {
+        return currentState().getObjectsRecursive(_dataObjectClass);
+    }
+
+    /// Returns the main window this applet is embedded in.
+    MainWindow& mainWindow() const;
+
+    /// Lets the applet create the UI widget that is to be placed into the data inspector panel.
+    virtual QWidget* createWidget() = 0;
+
+    /// Creates and returns the list widget displaying the list of data object objects.
+    QListWidget* objectSelectionWidget();
+
+    /// Makes the applet update its data display.
+    virtual void updateDisplay();
+
+    /// This is called when the applet is no longer visible.
+    virtual void deactivate() {}
+
+    /// Selects a specific data object in this applet.
+    virtual bool selectDataObject(PipelineNode* createdByNode, const QString& objectIdentifierHint, const QVariant& modeHint);
+
+    /// Returns the currently selected data pipeline in the scene.
+    Pipeline* currentPipeline() const;
+
+    /// Returns the current output of the data pipeline displayed in the applet.
+    const PipelineFlowState& currentState() const;
+
+    /// Returns the data object that is currently selected.
+    const DataObject* selectedDataObject() const { return _selectedDataObject; }
+
+    /// Returns the data collection path of the currently selected data object.
+    const ConstDataObjectPath& selectedDataObjectPath() const { return _selectedDataObjectPath; }
+
+    /// Returns the panel hosting this applet.
+    DataInspectorPanel* inspectorPanel() const;
+
+protected:
+
+    /// Constructor.
+    DataInspectionApplet(const DataObject::OOMetaClass& dataObjectClass) : _dataObjectClass(dataObjectClass) {}
+
+    /// Updates the list of data objects displayed in the inspector.
+    void updateDataObjectList();
+
+Q_SIGNALS:
+
+    /// This signal is emitted when the user selects a different data object in the list.
+    void currentObjectChanged(const DataObject* dataObject);
+
+    /// This signal is emitted when the user selects a different data object in the list.
+    void currentObjectPathChanged(const QString& dataObjectPath);
+
+private:
+
+    /// The type of data objects displayed by this applet.
+    const DataObject::OOMetaClass& _dataObjectClass;
+
+    /// The widget for selecting the current data object.
+    QListWidget* _objectSelectionWidget = nullptr;
+
+    /// The path of the currently selected data object.
+    ConstDataObjectPath _selectedDataObjectPath;
+
+    /// The identifier path of the currently selected data object.
+    QString _selectedDataObjectPathString;
+
+    /// Pointer to the currently selected data object.
+    const DataObject* _selectedDataObject = nullptr;
+};
+
+}   // End of namespace

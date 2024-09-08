@@ -1,0 +1,236 @@
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2023 OVITO GmbH, Germany
+//
+//  This file is part of OVITO (Open Visualization Tool).
+//
+//  OVITO is free software; you can redistribute it and/or modify it either under the
+//  terms of the GNU General Public License version 3 as published by the Free Software
+//  Foundation (the "GPL") or, at your option, under the terms of the MIT License.
+//  If you do not alter this notice, a recipient may use your version of this
+//  file under either the GPL or the MIT License.
+//
+//  You should have received a copy of the GPL along with this program in a
+//  file LICENSE.GPL.txt.  You should have received a copy of the MIT License along
+//  with this program in a file LICENSE.MIT.txt
+//
+//  This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
+//  either express or implied. See the GPL or the MIT License for the specific language
+//  governing rights and limitations.
+//
+////////////////////////////////////////////////////////////////////////////////////////
+
+#include <ovito/core/Core.h>
+#include "TextPrimitive.h"
+#include "SceneRenderer.h"
+
+#include <QTextDocument>
+#include <QTextFrame>
+#include <QTextFrameFormat>
+#include <QAbstractTextDocumentLayout>
+
+namespace Ovito {
+
+static void ensureFontRenderingCapability()
+{
+    if(!qobject_cast<QGuiApplication*>(qApp)) {
+        throw SceneRenderer::RendererException(QStringLiteral(
+                "Font rendering capability is not available because OVITO is running in headless mode. Enable graphics mode by setting environment variable OVITO_GUI_MODE=1. "
+                "See also https://docs.ovito.org/python/modules/ovito_vis.html#ovito.vis.OpenGLRenderer."));
+    }
+}
+
+/******************************************************************************
+* Sets the destination rectangle for rendering the image in viewport coordinates.
+******************************************************************************/
+void TextPrimitive::setPositionViewport(const SceneRenderer* renderer, const Point2& pos)
+{
+    QSize windowSize = renderer->viewportRect().size();
+    Point2 pwin((pos.x() + 1.0) * windowSize.width() / 2.0, (-pos.y() + 1.0) * windowSize.height() / 2.0);
+    setPositionWindow(pwin);
+}
+
+/******************************************************************************
+* Determines whether the text primitive uses rich text formatting or not.
+******************************************************************************/
+Qt::TextFormat TextPrimitive::resolvedTextFormat() const
+{
+    Qt::TextFormat format = textFormat();
+    if(format == Qt::AutoText)
+        format = Qt::mightBeRichText(text()) ? Qt::RichText : Qt::PlainText;
+    return format;
+}
+
+/******************************************************************************
+* Computes the bounds of the text in local coordinates, i.e., in a
+* coordinate system that is aligned with the text. The bounds are computed as if
+* the text was drawn at (0,0).
+* Does NOT take into account text alignment, offset position, rotation, or outline width.
+******************************************************************************/
+QRectF TextPrimitive::queryLocalBounds(qreal devicePixelRatio, Qt::TextFormat textFormatHint) const
+{
+    ensureFontRenderingCapability();
+
+    QRectF textBounds;
+    Qt::TextFormat resolvedTextFormat = textFormat();
+    if(resolvedTextFormat == Qt::AutoText) {
+        if(textFormatHint != Qt::AutoText) resolvedTextFormat = textFormatHint;
+        else resolvedTextFormat = Qt::mightBeRichText(text()) ? Qt::RichText : Qt::PlainText;
+    }
+#ifndef Q_OS_WIN
+    if(resolvedTextFormat != Qt::RichText) {
+#else
+    // On Windows, our own method for painting the text outline using QPainterPath does not work correctly.
+    // Internal rounding issues in Qt's font engine lead to a mismatch between the outline and the filled text painted by QPainter::drawText().
+    // As a workaround, fall back to the more expensive QTextDocument-based method for rendering the outline, which otherwise is only used for formatted text.
+    if(resolvedTextFormat != Qt::RichText && effectiveOutlineWidth(devicePixelRatio) == 0) {
+#endif
+        if(!useTightBox()) {
+            textBounds = QFontMetricsF(font()).boundingRect(text());
+        }
+        else {
+            QPainterPath textPath;
+            textPath.addText(0, 0, font(), text());
+            textBounds = textPath.boundingRect();
+        }
+        textBounds.moveTo(devicePixelRatio * textBounds.x(), devicePixelRatio * textBounds.y());
+        textBounds.setWidth(devicePixelRatio * textBounds.width());
+        textBounds.setHeight(devicePixelRatio * textBounds.height());
+    }
+    else {
+        QTextDocument doc;
+        doc.setUndoRedoEnabled(false);
+        if(resolvedTextFormat == Qt::RichText)
+            doc.setHtml(text());
+        else
+            doc.setPlainText(text());
+        doc.setDefaultFont(font());
+        doc.setDocumentMargin(0);
+        QTextOption opt = doc.defaultTextOption();
+        opt.setAlignment(Qt::Alignment(alignment()));
+        doc.setDefaultTextOption(opt);
+        textBounds = QRectF(QPointF(0,0), devicePixelRatio * doc.size());
+    }
+
+    return textBounds;
+}
+
+/******************************************************************************
+* Computes the axis-aligned bounding rectangle of the text in the canvas coordinate system.
+* This method takes into account text alignment, offset position, rotation, and outline width.
+* This overload uses the pre-computed size of the text in the local coordinate system.
+******************************************************************************/
+QRectF TextPrimitive::computeBoundingBox(const QSizeF textSize, qreal devicePixelRatio) const
+{
+    QRectF boundingRect(QPointF(0,0), textSize);
+
+    // Apply horizontal alignment.
+    if(alignment() & Qt::AlignRight)
+        boundingRect.moveLeft(-textSize.width());
+    else if(alignment() & Qt::AlignHCenter)
+        boundingRect.moveLeft(-textSize.width() / 2);
+
+    // Apply vertical alignment.
+    if(alignment() & Qt::AlignBottom)
+        boundingRect.moveTop(-textSize.height());
+    else if(alignment() & Qt::AlignVCenter)
+        boundingRect.moveTop(-textSize.height() / 2);
+
+    // Apply rotation.
+    if(rotation() != 0.0) {
+        boundingRect = QTransform().rotateRadians(rotation()).mapRect(boundingRect);
+    }
+
+    // Apply translation.
+    boundingRect.translate(position().x(), position().y());
+
+    // Apply outline margin.
+    qreal effectiveOutlineWidth = this->effectiveOutlineWidth(devicePixelRatio);
+    boundingRect.adjust(-effectiveOutlineWidth, -effectiveOutlineWidth, effectiveOutlineWidth, effectiveOutlineWidth);
+
+    return boundingRect;
+}
+
+/******************************************************************************
+* Draws the text (and optional outline) using a QPainter.
+******************************************************************************/
+void TextPrimitive::draw(QPainter& painter, Qt::TextFormat resolvedTextFormat, qreal textWidth) const
+{
+    ensureFontRenderingCapability();
+
+#ifndef Q_OS_WIN
+    if(resolvedTextFormat != Qt::RichText) {
+#else
+    // On Windows, our own method for painting the text outline using QPainterPath does not work correctly.
+    // Internal rounding issues in Qt's font engine lead to a mismatch between the outline and the filled text painted
+    // by QPainter::drawText(). As a workaround, fall back to the more expensive QTextDocument-based method for
+    // rendering the outline, which otherwise is only used for formatted text.
+    if(resolvedTextFormat != Qt::RichText && effectiveOutlineWidth() == 0) {
+#endif
+        drawPlainText(painter);
+    }
+    else {
+        drawRichText(painter, resolvedTextFormat, textWidth);
+    }
+}
+
+/******************************************************************************
+* Draws the unformatted text (and optional outline) using a QPainter.
+******************************************************************************/
+void TextPrimitive::drawPlainText(QPainter& painter) const
+{
+    painter.setFont(font());
+
+    if(qreal effectiveOutlineWidth = this->effectiveOutlineWidth()) {
+        QPainterPath textPath;
+        textPath.addText(QPointF(0,0), font(), text());
+        painter.setPen(QPen(QBrush(outlineColor()), 2 * effectiveOutlineWidth));
+        painter.drawPath(textPath);
+    }
+
+    painter.setPen((QColor)color());
+    painter.drawText(QPointF(0,0), text());
+}
+
+/******************************************************************************
+* Draws the formatted text (and optional outline) using a QPainter.
+******************************************************************************/
+void TextPrimitive::drawRichText(QPainter& painter, Qt::TextFormat resolvedTextFormat, qreal textWidth) const
+{
+    QTextDocument doc;
+    doc.setUndoRedoEnabled(false);
+    doc.setDefaultFont(font());
+    if(resolvedTextFormat == Qt::RichText)
+        doc.setHtml(text());
+    else
+        doc.setPlainText(text());
+    // Remove document margin.
+    doc.setDocumentMargin(0);
+    // Specify document alignment.
+    QTextOption opt = doc.defaultTextOption();
+    opt.setAlignment(Qt::Alignment(alignment()));
+    doc.setDefaultTextOption(opt);
+    doc.setTextWidth(textWidth);
+    // When rendering outlined text is requested, apply the outlined text style to the entire document.
+    qreal effectiveOutlineWidth = this->effectiveOutlineWidth();
+    if(effectiveOutlineWidth != 0) {
+        QTextCursor cursor(&doc);
+        cursor.select(QTextCursor::Document);
+        QTextCharFormat charFormat;
+        charFormat.setTextOutline(QPen(QBrush(outlineColor()), 2 * effectiveOutlineWidth));
+        doc.setUndoRedoEnabled(true);
+        cursor.mergeCharFormat(charFormat);
+    }
+    QAbstractTextDocumentLayout::PaintContext ctx;
+    // Specify default text color:
+    ctx.palette.setColor(QPalette::Text, (QColor)color());
+    doc.documentLayout()->draw(&painter, ctx);
+    // When rendering outlined text, paint the text again on top without the outline
+    // in order to make the outline only go outward, not inward into the letters.
+    if(effectiveOutlineWidth != 0) {
+        doc.undo();
+        doc.documentLayout()->draw(&painter, ctx);
+    }
+}
+
+}   // End of namespace

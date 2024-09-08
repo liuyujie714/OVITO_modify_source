@@ -1,0 +1,162 @@
+<!DOCTYPE RCC><RCC version="1.0">
+
+<qresource prefix="/openglrenderer">
+
+	<file>glsl/global_uniforms.glsl</file>
+	<file>glsl/picking.glsl</file>
+	<file>glsl/shape_orientation.glsl</file>
+	<file>glsl/shading.frag</file>
+	<file>glsl/shading_transparency.frag</file>
+	<file>glsl/view_ray.vert</file>
+	<file>glsl/view_ray.frag</file>
+	<file>glsl/flat_normal.vert</file>
+	<file>glsl/flat_normal.frag</file>
+	<file>glsl/flat_normal.GLES.vert</file>
+	<file>glsl/flat_normal.GLES.frag</file>
+
+	<file>glsl/particles/sphere/sphere.vert</file>
+	<file>glsl/particles/sphere/sphere.frag</file>
+	<file>glsl/particles/sphere/sphere_picking.vert</file>
+	<file>glsl/particles/sphere/sphere_picking.frag</file>
+	<file>glsl/particles/sphere/sphere.geom.vert</file>
+	<file>glsl/particles/sphere/sphere.geom</file>
+	<file>glsl/particles/sphere/sphere_picking.geom.vert</file>
+	<file>glsl/particles/sphere/sphere_picking.geom</file>
+
+	<file>glsl/particles/circle/circle.vert</file>
+	<file>glsl/particles/circle/circle.frag</file>
+	<file>glsl/particles/circle/circle_picking.vert</file>
+	<file>glsl/particles/circle/circle_picking.frag</file>
+	<file>glsl/particles/circle/circle.geom.vert</file>
+	<file>glsl/particles/circle/circle.geom</file>
+	<file>glsl/particles/circle/circle_picking.geom.vert</file>
+	<file>glsl/particles/circle/circle_picking.geom</file>
+
+	<file>glsl/particles/cube/cube.vert</file>
+	<file>glsl/particles/cube/cube.frag</file>
+	<file>glsl/particles/cube/cube_picking.vert</file>
+	<file>glsl/particles/cube/cube_picking.frag</file>
+	<file>glsl/particles/cube/cube.geom.vert</file>
+	<file>glsl/particles/cube/cube.geom</file>
+	<file>glsl/particles/cube/cube_picking.geom.vert</file>
+	<file>glsl/particles/cube/cube_picking.geom</file>
+
+	<file>glsl/particles/square/square.vert</file>
+	<file>glsl/particles/square/square.frag</file>
+	<file>glsl/particles/square/square_picking.vert</file>
+	<file>glsl/particles/square/square_picking.frag</file>
+	<file>glsl/particles/square/square.geom.vert</file>
+	<file>glsl/particles/square/square.geom</file>
+	<file>glsl/particles/square/square_picking.geom.vert</file>
+	<file>glsl/particles/square/square_picking.geom</file>
+
+	<file>glsl/particles/imposter/imposter.vert</file>
+	<file>glsl/particles/imposter/imposter.frag</file>
+	<file>glsl/particles/imposter/imposter_picking.vert</file>
+	<file>glsl/particles/imposter/imposter_picking.frag</file>
+	<file>glsl/particles/imposter/imposter.geom.vert</file>
+	<file>glsl/particles/imposter/imposter.geom</file>
+	<file>glsl/particles/imposter/imposter_picking.geom.vert</file>
+	<file>glsl/particles/imposter/imposter_picking.geom</file>
+
+	<file>glsl/particles/imposter_flat/imposter_flat.vert</file>
+	<file>glsl/particles/imposter_flat/imposter_flat.frag</file>
+	<file>glsl/particles/imposter_flat/imposter_flat_picking.vert</file>
+	<file>glsl/particles/imposter_flat/imposter_flat_picking.frag</file>
+	<file>glsl/particles/imposter_flat/imposter_flat.geom.vert</file>
+	<file>glsl/particles/imposter_flat/imposter_flat.geom</file>
+	<file>glsl/particles/imposter_flat/imposter_flat_picking.geom.vert</file>
+	<file>glsl/particles/imposter_flat/imposter_flat_picking.geom</file>
+
+	<file>glsl/particles/box/box.vert</file>
+	<file>glsl/particles/box/box.frag</file>
+	<file>glsl/particles/box/box_picking.vert</file>
+	<file>glsl/particles/box/box_picking.frag</file>
+	<file>glsl/particles/box/box.geom.vert</file>
+	<file>glsl/particles/box/box.geom</file>
+	<file>glsl/particles/box/box_picking.geom.vert</file>
+	<file>glsl/particles/box/box_picking.geom</file>
+
+	<file>glsl/particles/ellipsoid/ellipsoid.vert</file>
+	<file>glsl/particles/ellipsoid/ellipsoid.frag</file>
+	<file>glsl/particles/ellipsoid/ellipsoid_picking.vert</file>
+	<file>glsl/particles/ellipsoid/ellipsoid_picking.frag</file>
+	<file>glsl/particles/ellipsoid/ellipsoid.geom.vert</file>
+	<file>glsl/particles/ellipsoid/ellipsoid.geom</file>
+	<file>glsl/particles/ellipsoid/ellipsoid_picking.geom.vert</file>
+	<file>glsl/particles/ellipsoid/ellipsoid_picking.geom</file>
+
+	<file>glsl/particles/superquadric/superquadric.vert</file>
+	<file>glsl/particles/superquadric/superquadric.frag</file>
+	<file>glsl/particles/superquadric/superquadric_picking.vert</file>
+	<file>glsl/particles/superquadric/superquadric_picking.frag</file>
+	<file>glsl/particles/superquadric/superquadric.geom.vert</file>
+	<file>glsl/particles/superquadric/superquadric.geom</file>
+	<file>glsl/particles/superquadric/superquadric_picking.geom.vert</file>
+	<file>glsl/particles/superquadric/superquadric_picking.geom</file>
+
+	<file>glsl/cylinder/cylinder.frag</file>
+	<file>glsl/cylinder/cylinder.vert</file>
+	<file>glsl/cylinder/cylinder_picking.frag</file>
+	<file>glsl/cylinder/cylinder_picking.vert</file>
+	<file>glsl/cylinder/cylinder_flat.frag</file>
+	<file>glsl/cylinder/cylinder_flat.vert</file>
+	<file>glsl/cylinder/cylinder_flat_picking.frag</file>
+	<file>glsl/cylinder/cylinder_flat_picking.vert</file>
+	<file>glsl/cylinder/cylinder.geom</file>
+	<file>glsl/cylinder/cylinder.geom.vert</file>
+	<file>glsl/cylinder/cylinder_picking.geom</file>
+	<file>glsl/cylinder/cylinder_picking.geom.vert</file>
+
+	<file>glsl/cylinder/arrow_head.frag</file>
+	<file>glsl/cylinder/arrow_head.vert</file>
+	<file>glsl/cylinder/arrow_head_picking.frag</file>
+	<file>glsl/cylinder/arrow_head_picking.vert</file>
+	<file>glsl/cylinder/arrow_tail.frag</file>
+	<file>glsl/cylinder/arrow_tail.vert</file>
+	<file>glsl/cylinder/arrow_tail_picking.frag</file>
+	<file>glsl/cylinder/arrow_tail_picking.vert</file>
+	<file>glsl/cylinder/arrow_flat.frag</file>
+	<file>glsl/cylinder/arrow_flat.vert</file>
+	<file>glsl/cylinder/arrow_flat_picking.frag</file>
+	<file>glsl/cylinder/arrow_flat_picking.vert</file>
+
+	<file>glsl/mesh/mesh.frag</file>
+	<file>glsl/mesh/mesh.vert</file>
+	<file>glsl/mesh/mesh_picking.frag</file>
+	<file>glsl/mesh/mesh_picking.vert</file>
+	<file>glsl/mesh/mesh_wireframe.frag</file>
+	<file>glsl/mesh/mesh_wireframe.vert</file>
+	<file>glsl/mesh/mesh_wireframe_instanced.frag</file>
+	<file>glsl/mesh/mesh_wireframe_instanced.vert</file>
+	<file>glsl/mesh/mesh_instanced.frag</file>
+	<file>glsl/mesh/mesh_instanced.vert</file>
+	<file>glsl/mesh/mesh_instanced_picking.frag</file>
+	<file>glsl/mesh/mesh_instanced_picking.vert</file>
+	<file>glsl/mesh/mesh_instanced_with_colors.frag</file>
+	<file>glsl/mesh/mesh_instanced_with_colors.vert</file>
+	<file>glsl/mesh/mesh_color_mapping.frag</file>
+	<file>glsl/mesh/mesh_color_mapping.vert</file>
+
+	<file>glsl/lines/line.vert</file>
+	<file>glsl/lines/line.frag</file>
+	<file>glsl/lines/line_picking.vert</file>
+	<file>glsl/lines/line_uniform_color.vert</file>
+	<file>glsl/lines/line_uniform_color.frag</file>
+	<file>glsl/lines/thick_line.vert</file>
+	<file>glsl/lines/thick_line_picking.vert</file>
+	<file>glsl/lines/thick_line_uniform_color.vert</file>
+
+	<file>glsl/image/image.vert</file>
+	<file>glsl/image/image.frag</file>
+	<file>glsl/image/oit_compose.vert</file>
+	<file>glsl/image/oit_compose.frag</file>
+
+	<file>glsl/marker/marker_box.vert</file>
+	<file>glsl/marker/marker_box.frag</file>
+	<file>glsl/marker/marker_box_picking.vert</file>
+	<file>glsl/marker/marker_box_picking.frag</file>
+
+</qresource>
+
+</RCC>

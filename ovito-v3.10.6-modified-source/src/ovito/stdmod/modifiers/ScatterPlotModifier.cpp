@@ -1,0 +1,247 @@
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2023 OVITO GmbH, Germany
+//
+//  This file is part of OVITO (Open Visualization Tool).
+//
+//  OVITO is free software; you can redistribute it and/or modify it either under the
+//  terms of the GNU General Public License version 3 as published by the Free Software
+//  Foundation (the "GPL") or, at your option, under the terms of the MIT License.
+//  If you do not alter this notice, a recipient may use your version of this
+//  file under either the GPL or the MIT License.
+//
+//  You should have received a copy of the GPL along with this program in a
+//  file LICENSE.GPL.txt.  You should have received a copy of the MIT License along
+//  with this program in a file LICENSE.MIT.txt
+//
+//  This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
+//  either express or implied. See the GPL or the MIT License for the specific language
+//  governing rights and limitations.
+//
+////////////////////////////////////////////////////////////////////////////////////////
+
+#include <ovito/stdmod/StdMod.h>
+#include <ovito/core/dataset/DataSet.h>
+#include <ovito/core/dataset/pipeline/ModificationNode.h>
+#include <ovito/stdobj/properties/Property.h>
+#include <ovito/stdobj/properties/PropertyContainer.h>
+#include <ovito/stdobj/table/DataTable.h>
+#include "ScatterPlotModifier.h"
+
+namespace Ovito {
+
+IMPLEMENT_OVITO_CLASS(ScatterPlotModifier);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, selectXAxisInRange);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, selectionXAxisRangeStart);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, selectionXAxisRangeEnd);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, selectYAxisInRange);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, selectionYAxisRangeStart);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, selectionYAxisRangeEnd);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, fixXAxisRange);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, xAxisRangeStart);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, xAxisRangeEnd);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, fixYAxisRange);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, yAxisRangeStart);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, yAxisRangeEnd);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, xAxisProperty);
+DEFINE_PROPERTY_FIELD(ScatterPlotModifier, yAxisProperty);
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, selectXAxisInRange, "Select elements in x-range");
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, selectionXAxisRangeStart, "Selection x-range start");
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, selectionXAxisRangeEnd, "Selection x-range end");
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, selectYAxisInRange, "Select elements in y-range");
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, selectionYAxisRangeStart, "Selection y-range start");
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, selectionYAxisRangeEnd, "Selection y-range end");
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, fixXAxisRange, "Fix x-range");
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, xAxisRangeStart, "X-range start");
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, xAxisRangeEnd, "X-range end");
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, fixYAxisRange, "Fix y-range");
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, yAxisRangeStart, "Y-range start");
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, yAxisRangeEnd, "Y-range end");
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, xAxisProperty, "X-axis property");
+SET_PROPERTY_FIELD_LABEL(ScatterPlotModifier, yAxisProperty, "Y-axis property");
+
+/******************************************************************************
+* Constructs the modifier object.
+******************************************************************************/
+ScatterPlotModifier::ScatterPlotModifier(ObjectInitializationFlags flags) : GenericPropertyModifier(flags),
+    _selectXAxisInRange(false),
+    _selectionXAxisRangeStart(0),
+    _selectionXAxisRangeEnd(1),
+    _selectYAxisInRange(false),
+    _selectionYAxisRangeStart(0),
+    _selectionYAxisRangeEnd(1),
+    _fixXAxisRange(false),
+    _xAxisRangeStart(0),
+    _xAxisRangeEnd(0),
+    _fixYAxisRange(false),
+    _yAxisRangeStart(0),
+    _yAxisRangeEnd(0)
+{
+    // Operate on particle properties by default.
+    setDefaultSubject(QStringLiteral("Particles"), QStringLiteral("Particles"));
+}
+
+/******************************************************************************
+* This method is called by the system when the modifier has been inserted
+* into a pipeline.
+******************************************************************************/
+void ScatterPlotModifier::initializeModifier(const ModifierInitializationRequest& request)
+{
+    GenericPropertyModifier::initializeModifier(request);
+
+    // Use the first available property from the input state as data source when the modifier is newly created.
+    if((xAxisProperty().isNull() || yAxisProperty().isNull()) && subject() && ExecutionContext::isInteractive()) {
+        const PipelineFlowState& input = request.modificationNode()->evaluateInputSynchronous(request);
+        if(const PropertyContainer* container = input.getLeafObject(subject())) {
+            PropertyReference bestProperty;
+            for(const Property* property : container->properties()) {
+                bestProperty = PropertyReference(subject().dataClass(), property, (property->componentCount() > 1) ? 0 : -1);
+            }
+            if(xAxisProperty().isNull() && !bestProperty.isNull()) {
+                setXAxisProperty(bestProperty);
+            }
+            if(yAxisProperty().isNull() && !bestProperty.isNull()) {
+                setYAxisProperty(bestProperty);
+            }
+        }
+    }
+}
+
+/******************************************************************************
+* Is called when the value of a property of this object has changed.
+******************************************************************************/
+void ScatterPlotModifier::propertyChanged(const PropertyFieldDescriptor* field)
+{
+    if(field == PROPERTY_FIELD(GenericPropertyModifier::subject) && !isBeingLoaded() && !isUndoingOrRedoing()) {
+        // Whenever the selected property class of this modifier is changed, update the source property references.
+        setXAxisProperty(xAxisProperty().convertToContainerClass(subject().dataClass()));
+        setYAxisProperty(yAxisProperty().convertToContainerClass(subject().dataClass()));
+    }
+    else if((field == PROPERTY_FIELD(ScatterPlotModifier::xAxisProperty) || field == PROPERTY_FIELD(ScatterPlotModifier::yAxisProperty)) && !isBeingLoaded()) {
+        // Changes of some the modifier's parameters affect the result of ScatterPlotModifier::getPipelineEditorShortInfo().
+        notifyDependents(ReferenceEvent::ObjectStatusChanged);
+    }
+
+    GenericPropertyModifier::propertyChanged(field);
+}
+
+/******************************************************************************
+* Modifies the input data synchronously.
+******************************************************************************/
+void ScatterPlotModifier::evaluateSynchronous(const ModifierEvaluationRequest& request, PipelineFlowState& state)
+{
+    if(!subject())
+        throw Exception(tr("No data element type set."));
+    if(xAxisProperty().isNull())
+        throw Exception(tr("No input property for x-axis selected."));
+    if(yAxisProperty().isNull())
+        throw Exception(tr("No input property for y-axis selected."));
+
+    // Check if the source property is the right kind of property.
+    if(xAxisProperty().containerClass() != subject().dataClass())
+        throw Exception(tr("Modifier was set to operate on '%1', but the selected input is a '%2' property.")
+            .arg(subject().dataClass()->pythonName()).arg(xAxisProperty().containerClass()->propertyClassDisplayName()));
+
+    // Check if the source property is the right kind of property.
+    if(yAxisProperty().containerClass() != subject().dataClass())
+        throw Exception(tr("Modifier was set to operate on '%1', but the selected input is a '%2' property.")
+            .arg(subject().dataClass()->pythonName()).arg(yAxisProperty().containerClass()->propertyClassDisplayName()));
+
+    // Look up the property container object.
+    const PropertyContainer* container = state.expectLeafObject(subject());
+    container->verifyIntegrity();
+
+    // Get the input properties.
+    const Property* xProperty = xAxisProperty().findInContainer(container);
+    if(!xProperty)
+        throw Exception(tr("The selected input property '%1' is not present.").arg(xAxisProperty().name()));
+    const Property* yProperty = yAxisProperty().findInContainer(container);
+    if(!yProperty)
+        throw Exception(tr("The selected input property '%1' is not present.").arg(yAxisProperty().name()));
+
+    size_t xVecComponent = std::max(0, xAxisProperty().vectorComponent());
+    size_t xVecComponentCount = xProperty->componentCount();
+    size_t yVecComponent = std::max(0, yAxisProperty().vectorComponent());
+    size_t yVecComponentCount = yProperty->componentCount();
+    if(xVecComponent >= xProperty->componentCount())
+        throw Exception(tr("The selected vector component is out of range. The property '%1' has only %2 components per element.").arg(xProperty->name()).arg(xProperty->componentCount()));
+    if(yVecComponent >= yProperty->componentCount())
+        throw Exception(tr("The selected vector component is out of range. The property '%1' has only %2 components per element.").arg(yProperty->name()).arg(yProperty->componentCount()));
+
+    // Get selection ranges.
+    FloatType selectionXAxisRangeStart = this->selectionXAxisRangeStart();
+    FloatType selectionXAxisRangeEnd = this->selectionXAxisRangeEnd();
+    FloatType selectionYAxisRangeStart = this->selectionYAxisRangeStart();
+    FloatType selectionYAxisRangeEnd = this->selectionYAxisRangeEnd();
+    if(selectionXAxisRangeStart > selectionXAxisRangeEnd)
+        std::swap(selectionXAxisRangeStart, selectionXAxisRangeEnd);
+    if(selectionYAxisRangeStart > selectionYAxisRangeEnd)
+        std::swap(selectionYAxisRangeStart, selectionYAxisRangeEnd);
+
+    // Create output selection.
+    BufferWriteAccess<SelectionIntType, access_mode::discard_write> outputSelection;
+    size_t numSelected = 0;
+    if((selectXAxisInRange() || selectYAxisInRange()) && container->getOOMetaClass().isValidStandardPropertyId(Property::GenericSelectionProperty)) {
+        // First make sure we can safely modify the property container.
+        PropertyContainer* mutableContainer = state.expectMutableLeafObject(subject());
+        // Add the selection property to the output container.
+        outputSelection = mutableContainer->createProperty(Property::GenericSelectionProperty);
+        boost::fill(outputSelection, 1);
+        numSelected = outputSelection.size();
+    }
+
+    // Create output arrays.
+    PropertyPtr out_x = DataTable::OOClass().createUserProperty(DataBuffer::Uninitialized, container->elementCount(), Property::FloatDefault, 1, xAxisProperty().nameWithComponent());
+    PropertyPtr out_y = DataTable::OOClass().createUserProperty(DataBuffer::Uninitialized, container->elementCount(), Property::FloatDefault, 1, yAxisProperty().nameWithComponent());
+    BufferWriteAccess<FloatType, access_mode::discard_read_write> out_x_access(out_x);
+    BufferWriteAccess<FloatType, access_mode::discard_read_write> out_y_access(out_y);
+
+    // Collect X coordinates.
+    xProperty->copyComponentTo(out_x_access.begin(), xVecComponent);
+
+    // Collect Y coordinates.
+    yProperty->copyComponentTo(out_y_access.begin(), yVecComponent);
+
+    if(outputSelection && selectXAxisInRange()) {
+        SelectionIntType* s = outputSelection.begin();
+        for(const FloatType x : out_x_access) {
+            if(x < selectionXAxisRangeStart || x > selectionXAxisRangeEnd) {
+                *s = 0;
+                numSelected--;
+            }
+            ++s;
+        }
+    }
+
+    if(outputSelection && selectYAxisInRange()) {
+        SelectionIntType* s = outputSelection.begin();
+        for(const FloatType y : out_y_access) {
+            if(y < selectionYAxisRangeStart || y > selectionYAxisRangeEnd) {
+                if(*s) {
+                    *s = 0;
+                    numSelected--;
+                }
+            }
+            ++s;
+        }
+    }
+    out_x_access.reset();
+    out_y_access.reset();
+
+    // Output a data table object with the scatter points.
+    DataTable* table = state.createObject<DataTable>(QStringLiteral("scatter"), request.modificationNode(),
+        DataTable::Scatter, tr("%1 vs. %2").arg(yAxisProperty().nameWithComponent()).arg(xAxisProperty().nameWithComponent()),
+        std::move(out_y), std::move(out_x));
+    OVITO_ASSERT(table == state.getObjectBy<DataTable>(request.modificationNode(), QStringLiteral("scatter")));
+
+    QString statusMessage;
+    if(outputSelection) {
+        statusMessage = tr("%1 %2 selected (%3%)").arg(numSelected)
+                .arg(container->getOOMetaClass().elementDescriptionName())
+                .arg((FloatType)numSelected * 100 / std::max((size_t)1,outputSelection.size()), 0, 'f', 1);
+    }
+
+    state.setStatus(PipelineStatus(std::move(statusMessage)));
+}
+
+}   // End of namespace

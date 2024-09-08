@@ -1,0 +1,308 @@
+////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Copyright 2023 OVITO GmbH, Germany
+//
+//  This file is part of OVITO (Open Visualization Tool).
+//
+//  OVITO is free software; you can redistribute it and/or modify it either under the
+//  terms of the GNU General Public License version 3 as published by the Free Software
+//  Foundation (the "GPL") or, at your option, under the terms of the MIT License.
+//  If you do not alter this notice, a recipient may use your version of this
+//  file under either the GPL or the MIT License.
+//
+//  You should have received a copy of the GPL along with this program in a
+//  file LICENSE.GPL.txt.  You should have received a copy of the MIT License along
+//  with this program in a file LICENSE.MIT.txt
+//
+//  This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
+//  either express or implied. See the GPL or the MIT License for the specific language
+//  governing rights and limitations.
+//
+////////////////////////////////////////////////////////////////////////////////////////
+
+#include <ovito/particles/Particles.h>
+#include <ovito/particles/objects/ParticlesVis.h>
+#include <ovito/particles/objects/Particles.h>
+#include <ovito/core/app/Application.h>
+#include <ovito/core/app/PluginManager.h>
+#include <ovito/core/dataset/DataSet.h>
+#include <ovito/core/dataset/pipeline/ModificationNode.h>
+#include <ovito/core/utilities/units/UnitsManager.h>
+#include <ovito/core/rendering/FrameBuffer.h>
+#include <ovito/core/rendering/SceneRenderer.h>
+#include "AmbientOcclusionModifier.h"
+
+namespace Ovito {
+
+IMPLEMENT_OVITO_CLASS(AmbientOcclusionModifier);
+DEFINE_PROPERTY_FIELD(AmbientOcclusionModifier, intensity);
+DEFINE_PROPERTY_FIELD(AmbientOcclusionModifier, samplingCount);
+DEFINE_PROPERTY_FIELD(AmbientOcclusionModifier, bufferResolution);
+SET_PROPERTY_FIELD_LABEL(AmbientOcclusionModifier, intensity, "Shading intensity");
+SET_PROPERTY_FIELD_LABEL(AmbientOcclusionModifier, samplingCount, "Number of exposure samples");
+SET_PROPERTY_FIELD_LABEL(AmbientOcclusionModifier, bufferResolution, "Render buffer resolution");
+SET_PROPERTY_FIELD_UNITS_AND_RANGE(AmbientOcclusionModifier, intensity, PercentParameterUnit, 0, 1);
+SET_PROPERTY_FIELD_UNITS_AND_RANGE(AmbientOcclusionModifier, samplingCount, IntegerParameterUnit, 3, 2000);
+SET_PROPERTY_FIELD_UNITS_AND_RANGE(AmbientOcclusionModifier, bufferResolution, IntegerParameterUnit, 1, AmbientOcclusionModifier::MAX_AO_RENDER_BUFFER_RESOLUTION);
+
+/******************************************************************************
+* Constructs the modifier object.
+******************************************************************************/
+AmbientOcclusionModifier::AmbientOcclusionModifier(ObjectInitializationFlags flags) : AsynchronousModifier(flags),
+    _intensity(0.7),
+    _samplingCount(40),
+    _bufferResolution(3)
+{
+}
+
+/******************************************************************************
+* Asks the modifier whether it can be applied to the given input data.
+******************************************************************************/
+bool AmbientOcclusionModifier::OOMetaClass::isApplicableTo(const DataCollection& input) const
+{
+    return input.containsObject<Particles>();
+}
+
+/******************************************************************************
+* Creates and initializes a computation engine that will compute the
+* modifier's results.
+******************************************************************************/
+Future<AsynchronousModifier::EnginePtr> AmbientOcclusionModifier::createEngine(const ModifierEvaluationRequest& request, const PipelineFlowState& input)
+{
+    if(Application::instance()->headlessMode()) {
+        throw Exception(tr(
+                "OVITO's ambient occlusion modifier requires OpenGL support and cannot be used in headless mode, that is if the application is running without access to a graphics environment. "
+                "Please see https://docs.ovito.org/python/modules/ovito_vis.html#ovito.vis.OpenGLRenderer for instructions "
+                "on how to enable OpenGL support in Python script environments."));
+    }
+
+    // Get modifier input.
+    const Particles* particles = input.expectObject<Particles>();
+    particles->verifyIntegrity();
+    const Property* posProperty = particles->expectProperty(Particles::PositionProperty);
+    const Property* typeProperty = particles->getProperty(Particles::TypeProperty);
+    const Property* radiusProperty = particles->getProperty(Particles::RadiusProperty);
+    const Property* shapeProperty = particles->getProperty(Particles::AsphericalShapeProperty);
+
+    // Compute bounding box of input particles.
+    Box3 boundingBox;
+    if(ParticlesVis* particleVis = particles->visElement<ParticlesVis>()) {
+        boundingBox.addBox(particleVis->particleBoundingBox(posProperty, typeProperty, radiusProperty, shapeProperty, true));
+    }
+
+    // The render buffer resolution.
+    int res = qBound(0, bufferResolution(), (int)MAX_AO_RENDER_BUFFER_RESOLUTION);
+    int resolution = (128 << res);
+
+    TimeInterval validityInterval = input.stateValidity();
+    ConstPropertyPtr radii = particles->inputParticleRadii();
+
+    // Create the offscreen renderer implementation.
+    OvitoClassPtr rendererClass = PluginManager::instance().findClass("OpenGLRenderer", "OffscreenOpenGLSceneRenderer");
+    if(!rendererClass)
+        throw Exception(tr("The OffscreenOpenGLSceneRenderer class is not available. Please make sure the OpenGLRenderer plugin is installed correctly."));
+    OORef<SceneRenderer> renderer = static_object_cast<SceneRenderer>(rendererClass->createInstance());
+
+    // Activate picking mode, because we want to render particles using false colors.
+    renderer->setImagePass(false);
+    renderer->setPickingPass(true);
+
+    // Create engine object. Pass all relevant modifier parameters to the engine as well as the input data.
+    return std::make_shared<AmbientOcclusionEngine>(request, validityInterval, particles, resolution, samplingCount(), posProperty, std::move(radii), boundingBox, std::move(renderer));
+}
+
+/******************************************************************************
+* Compute engine constructor.
+******************************************************************************/
+AmbientOcclusionModifier::AmbientOcclusionEngine::AmbientOcclusionEngine(const ModifierEvaluationRequest& request, const TimeInterval& validityInterval, ParticleOrderingFingerprint fingerprint, int resolution, int samplingCount, ConstPropertyPtr positions,
+        ConstPropertyPtr particleRadii, const Box3& boundingBox, OORef<SceneRenderer> renderer) :
+    Engine(request, validityInterval),
+    _resolution(resolution),
+    _samplingCount(std::max(1,samplingCount)),
+    _positions(std::move(positions)),
+    _particleRadii(std::move(particleRadii)),
+    _boundingBox(boundingBox),
+    _renderer(std::move(renderer)),
+    _brightness(DataBufferPtr::create(DataBuffer::Initialized, fingerprint.particleCount(), Property::FloatDefault, 1)),
+    _inputFingerprint(std::move(fingerprint))
+{
+    OVITO_ASSERT(_particleRadii->size() == _positions->size());
+}
+
+/******************************************************************************
+* Performs the actual computation. This method is executed in a worker thread.
+******************************************************************************/
+void AmbientOcclusionModifier::AmbientOcclusionEngine::perform()
+{
+    if(positions()->size() != 0) {
+        if(_boundingBox.isEmpty())
+            throw Exception(tr("Modifier input is degenerate or contains no particles."));
+
+        setProgressText(tr("Ambient occlusion"));
+
+        // Create the rendering frame buffer that receives the rendered image of the particles.
+        FrameBuffer frameBuffer(_resolution, _resolution);
+        QRect frameBufferRect(QPoint(0,0), frameBuffer.size());
+
+        // Create a local vis cache, because we are not in the main thread.
+        // But we assume that this cache is not being used much anyway.
+        MixedKeyCache visCache;
+
+        // Initialize the renderer.
+        _renderer->startRender(nullptr, frameBufferRect.size(), visCache);
+        try {
+            // The buffered particle geometry used for rendering the particles.
+            ParticlePrimitive particleBuffer;
+
+            setProgressMaximum(_samplingCount);
+            for(int sample = 0; sample < _samplingCount; sample++) {
+                if(!setProgressValue(sample))
+                    break;
+
+                // Generate lighting direction on unit sphere using "Fibonacci sphere algorithm".
+                // https://stackoverflow.com/a/26127012
+                FloatType y = FloatType(1) - (sample / FloatType(_samplingCount - 1)) * 2; // y goes from 1 to -1
+                FloatType r = std::sqrt(FloatType(1) - y * y); // radius at y
+                FloatType phi = (FloatType)sample * FLOATTYPE_PI * (FloatType(3) - sqrt(FloatType(5)));
+                Vector3 dir(std::cos(phi)*r, y, std::sin(phi)*r);
+                OVITO_ASSERT(std::abs(dir.length() - 1.0) < FLOATTYPE_EPSILON);
+
+                // Set up view projection.
+                ViewProjectionParameters projParams;
+                projParams.viewMatrix = AffineTransformation::lookAlong(_boundingBox.center(), dir, Vector3(0,0,1));
+
+                // Transform bounding box to camera space.
+                Box3 bb = _boundingBox.transformed(projParams.viewMatrix).centerScale(FloatType(1.01));
+
+                // Complete projection parameters.
+                projParams.aspectRatio = 1;
+                projParams.isPerspective = false;
+                projParams.inverseViewMatrix = projParams.viewMatrix.inverse();
+                projParams.fieldOfView = FloatType(0.5) * _boundingBox.size().length();
+                projParams.znear = -bb.maxc.z();
+                projParams.zfar  = std::max(-bb.minc.z(), projParams.znear + FloatType(1));
+                projParams.projectionMatrix = Matrix4::ortho(-projParams.fieldOfView, projParams.fieldOfView,
+                                    -projParams.fieldOfView, projParams.fieldOfView,
+                                    projParams.znear, projParams.zfar);
+                projParams.inverseProjectionMatrix = projParams.projectionMatrix.inverse();
+                projParams.validityInterval = TimeInterval::infinite();
+
+                // Discard the existing image in the frame buffer so that
+                // OffscreenOpenGLSceneRenderer::endFrame() can just return the unmodified
+                // frame buffer contents.
+                frameBuffer.image() = QImage();
+
+                _renderer->beginFrame(AnimationTime(0), nullptr, projParams, nullptr, frameBufferRect, &frameBuffer);
+                _renderer->setWorldTransform(AffineTransformation::Identity());
+                _renderer->resetPickingBuffer();
+                try {
+                    // Create particle buffer.
+                    if(!particleBuffer.positions()) {
+                        particleBuffer.setShadingMode(ParticlePrimitive::FlatShading);
+                        particleBuffer.setRenderingQuality(ParticlePrimitive::LowQuality);
+                        particleBuffer.setPositions(positions());
+                        particleBuffer.setRadii(particleRadii());
+                    }
+                    _renderer->renderParticles(particleBuffer);
+                }
+                catch(...) {
+                    _renderer->endFrame(false, frameBufferRect);
+                    throw;
+                }
+
+                // Retrieve the frame buffer contents.
+                _renderer->endFrame(true, frameBufferRect);
+
+                // Extract brightness values from rendered image.
+                const QImage& image = frameBuffer.image();
+                OVITO_ASSERT(!image.isNull());
+                BufferWriteAccess<FloatType, access_mode::read_write> brightnessValues(brightness());
+                for(int y = 0; y < _resolution; y++) {
+                    const QRgb* pixel = reinterpret_cast<const QRgb*>(image.scanLine(y));
+                    for(int x = 0; x < _resolution; x++, ++pixel) {
+                        quint32 red = qRed(*pixel);
+                        quint32 green = qGreen(*pixel);
+                        quint32 blue = qBlue(*pixel);
+                        quint32 alpha = qAlpha(*pixel);
+                        quint32 id = red + (green << 8) + (blue << 16) + (alpha << 24);
+                        if(id == 0)
+                            continue;
+                        // Subtracting base 1 from ID, because that's how SceneRenderer::registerSubObjectIDs() is implemented.
+                        quint32 particleIndex = id - 1;
+                        OVITO_ASSERT(particleIndex < brightnessValues.size());
+                        brightnessValues[particleIndex] += 1;
+                    }
+                }
+            }
+        }
+        catch(...) {
+            _renderer->endRender();
+            throw;
+        }
+        _renderer->endRender();
+
+        // The vis cache should remain unused when rendering just a bunch of spherical particles.
+        OVITO_ASSERT(visCache.size() == 0);
+
+        if(isCanceled()) return;
+        setProgressValue(_samplingCount);
+
+        // Normalize brightness values by particle area.
+        BufferReadAccess<GraphicsFloatType> radiusArray(particleRadii());
+        BufferWriteAccess<FloatType, access_mode::read_write> brightnessValues(brightness());
+        auto r = radiusArray.cbegin();
+        for(FloatType& b : brightnessValues) {
+            if(*r != 0)
+                b /= (*r) * (*r);
+            ++r;
+        }
+
+        if(isCanceled())
+            return;
+
+        // Normalize brightness values by global maximum.
+        FloatType maxBrightness = *boost::max_element(brightnessValues);
+        if(maxBrightness != 0) {
+            for(FloatType& b : brightnessValues) {
+                b /= maxBrightness;
+            }
+        }
+    }
+
+    // Release data that is no longer needed to reduce memory footprint.
+    _positions.reset();
+    _particleRadii.reset();
+    _renderer.reset();
+}
+
+/******************************************************************************
+* Injects the computed results of the engine into the data pipeline.
+******************************************************************************/
+void AmbientOcclusionModifier::AmbientOcclusionEngine::applyResults(const ModifierEvaluationRequest& request, PipelineFlowState& state)
+{
+    AmbientOcclusionModifier* modifier = static_object_cast<AmbientOcclusionModifier>(request.modifier());
+    OVITO_ASSERT(modifier);
+
+    Particles* particles = state.expectMutableObject<Particles>();
+    if(_inputFingerprint.hasChanged(particles))
+        throw Exception(tr("Cached modifier results are obsolete, because the number or the storage order of input particles has changed."));
+    OVITO_ASSERT(brightness() && particles->elementCount() == brightness()->size());
+
+    // Get effective intensity.
+    GraphicsFloatType intensity = qBound(GraphicsFloatType(0), static_cast<GraphicsFloatType>(modifier->intensity()), GraphicsFloatType(1));
+    if(intensity == 0 || particles->elementCount() == 0)
+        return;
+
+    // Get output property object.
+    BufferReadAccess<FloatType> brightnessValues(brightness());
+    BufferWriteAccess<ColorG, access_mode::read_write> colorProperty = particles->createProperty(DataBuffer::Initialized, Particles::ColorProperty, {particles});
+    const FloatType* b = brightnessValues.cbegin();
+    for(ColorG& c : colorProperty) {
+        GraphicsFloatType factor = FloatType(1) - intensity + static_cast<GraphicsFloatType>(*b);
+        if(factor < GraphicsFloatType(1))
+            c = c * factor;
+        ++b;
+    }
+}
+
+}   // End of namespace
