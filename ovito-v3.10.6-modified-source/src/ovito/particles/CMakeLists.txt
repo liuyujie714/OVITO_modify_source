@@ -96,6 +96,7 @@ SET(SourceFiles
     export/lammps/LAMMPSDataExporter.cpp
     export/lammps/LAMMPSDumpExporter.cpp
     export/xyz/XYZExporter.cpp
+    export/gro/GROExporter.cpp
     export/imd/IMDExporter.cpp
     export/gsd/GSDExporter.cpp
     util/NearestNeighborFinder.cpp
