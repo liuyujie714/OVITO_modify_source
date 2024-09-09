@@ -1,0 +1,239 @@
+diff --exclude build -urN ovito-v3.10.6/src/ovito/core/utilities/io/CompressedTextReader.cpp ovito-v3.10.6-modified-source/src/ovito/core/utilities/io/CompressedTextReader.cpp
+--- ovito-v3.10.6/src/ovito/core/utilities/io/CompressedTextReader.cpp	2024-05-02 22:30:30.000000000 +0800
++++ ovito-v3.10.6-modified-source/src/ovito/core/utilities/io/CompressedTextReader.cpp	2024-09-08 01:37:28.904577400 +0800
+@@ -63,7 +63,9 @@
+             throw Exception(FileManager::tr("Failed to open input file: %1").arg(_uncompressor->errorString()));
+         _stream = _uncompressor.get();
+ #else
+-        throw Exception(tr("Cannot open file '%1' for reading. This version of OVITO was built without I/O support for gzip compressed files."));
++        throw Exception(FileManager::tr(
++            "Cannot open file '%1' for reading. This version of OVITO was built without I/O support for gzip compressed files.")
++            .arg(_filename));
+ #endif
+     }
+     else {
+diff --exclude build -urN ovito-v3.10.6/src/ovito/core/utilities/io/CompressedTextWriter.cpp ovito-v3.10.6-modified-source/src/ovito/core/utilities/io/CompressedTextWriter.cpp
+--- ovito-v3.10.6/src/ovito/core/utilities/io/CompressedTextWriter.cpp	2024-05-02 22:30:30.000000000 +0800
++++ ovito-v3.10.6-modified-source/src/ovito/core/utilities/io/CompressedTextWriter.cpp	2024-09-08 01:37:16.716433500 +0800
+@@ -50,7 +50,10 @@
+             throw Exception(FileManager::tr("Failed to open output file '%1' for writing: %2").arg(_filename).arg(_compressor->errorString()));
+         _stream = _compressor.get();
+ #else
+-        throw Exception(tr("Cannot open file '%1' for writing. This version of OVITO was built without I/O support for gzip compressed files.").arg(_filename));
++        throw Exception(
++            FileManager::tr(
++                "Cannot open file '%1' for writing. This version of OVITO was built without I/O support for gzip compressed files.")
++                .arg(_filename));
+ #endif
+     }
+     else {
+diff --exclude build -urN ovito-v3.10.6/src/ovito/particles/CMakeLists.txt ovito-v3.10.6-modified-source/src/ovito/particles/CMakeLists.txt
+--- ovito-v3.10.6/src/ovito/particles/CMakeLists.txt	2024-05-02 22:30:30.000000000 +0800
++++ ovito-v3.10.6-modified-source/src/ovito/particles/CMakeLists.txt	2024-09-09 11:21:09.700608900 +0800
+@@ -96,6 +96,7 @@
+     export/lammps/LAMMPSDataExporter.cpp
+     export/lammps/LAMMPSDumpExporter.cpp
+     export/xyz/XYZExporter.cpp
++    export/gro/GROExporter.cpp
+     export/imd/IMDExporter.cpp
+     export/gsd/GSDExporter.cpp
+     util/NearestNeighborFinder.cpp
+diff --exclude build -urN ovito-v3.10.6/src/ovito/particles/export/gro/GROExporter.cpp ovito-v3.10.6-modified-source/src/ovito/particles/export/gro/GROExporter.cpp
+--- ovito-v3.10.6/src/ovito/particles/export/gro/GROExporter.cpp	1970-01-01 08:00:00.000000000 +0800
++++ ovito-v3.10.6-modified-source/src/ovito/particles/export/gro/GROExporter.cpp	2024-09-09 20:51:58.106237500 +0800
+@@ -0,0 +1,132 @@
++#include <ovito/particles/Particles.h>
++#include <ovito/particles/objects/Particles.h>
++#include <ovito/stdobj/simcell/SimulationCell.h>
++#include "GROExporter.h"
++
++
++namespace Ovito {
++
++IMPLEMENT_OVITO_CLASS(GROExporter);
++
++bool GROExporter::exportData(const PipelineFlowState& state, int frameNumber, const QString& filePath, MainThreadOperation& operation)
++{
++    // get particle positions
++    const Particles* particles = state.expectObject<Particles>();
++    particles->verifyIntegrity();
++
++    size_t natoms = particles->elementCount();
++    if(natoms < 1) {
++        throw Exception(tr("No atoms found. Cannot write GRO file."));
++    }
++    textStream() << "Written by Ovito\n";
++    textStream() << natoms << "\n";
++
++    // simulation cell.
++    Point3 origin = Point3::Origin();
++    const SimulationCell* simulationCell = state.getObject<SimulationCell>();
++    if(simulationCell) {
++        origin = simulationCell->cellOrigin();
++    }
++
++    // get atoms property
++    auto typeprop = particles->getProperty(Particles::TypeProperty);
++    auto restypeprop = particles->getProperty("Residue Type");
++    auto atomnameprop = particles->getProperty("Atom Name");
++    auto residprop = particles->getProperty("Residue Identifier");
++    // check properties
++    if(!typeprop) {
++        throw Exception(tr("Can not get TypeProperty"));
++    }
++
++    BufferReadAccess<Point3> positions = particles->expectProperty(Particles::PositionProperty);
++    BufferReadAccess<Point3> velocity = particles->getProperty(Particles::VelocityProperty);
++    BufferReadAccess<int32_t> particleTypeArray(typeprop);
++
++    BufferReadAccess<int32_t> resnames(restypeprop);
++    BufferReadAccess<int32_t> atomnames(atomnameprop);
++    BufferReadAccess<int64_t> resids(residprop);
++
++    operation.setProgressMaximum(positions.size());
++    constexpr auto Factor = FloatType(0.1); // Angstrom to nm factor
++    for(size_t i = 0; i < positions.size(); i++) {
++        const auto pos = (positions[i] - origin) * Factor;
++
++        // set up atomname
++        QString name;
++        // first try get atom name from Atom Name property
++        const ElementType* s = atomnames ? atomnameprop->elementType(atomnames[i]) : nullptr;
++        if(s && !s->name().isEmpty()) {
++            name = s->name();
++        }
++        // second try from Type peoperty
++        if(name.isEmpty()) {
++            const ElementType* type = particleTypeArray ? typeprop->elementType(particleTypeArray[i]) : nullptr;
++            if(type && !type->name().isEmpty()) {
++                name = type->name();
++            }
++            else if(particleTypeArray) {
++                name = tr("%1").arg(particleTypeArray[i]);
++            }
++            else {
++                throw Exception(tr("Can not get atom name, it is needed for GRO format."));
++            }
++        }
++
++
++        // set up resid
++        int64_t resid = 1;
++        if(resids) {
++            resid = resids[i];
++        }
++
++        // set up resname
++        QString resname = "UNK";
++        const ElementType* str = resnames ? restypeprop->elementType(resnames[i]) : nullptr;
++        if(str && !str->name().isEmpty()) {
++            resname = str->name();
++        }
++        else if(resnames) {
++            resname = tr("%1").arg(resnames[i]);
++        }
++
++        textStream() << tr("%1%2%3%4%5%6%7")
++                        .arg(resid % 100000, 5)
++                        .arg(resname, -5)
++                        .arg(name, 5)
++                        .arg((i + 1) % 100000, 5)
++                        .arg(pos.x(), 8, 'f', 3)
++                        .arg(pos.y(), 8, 'f', 3)
++                        .arg(pos.z(), 8, 'f', 3);
++        if(velocity) {
++            // the velocity unit not need convert
++            const auto &vel = velocity[i];
++            textStream() << tr("%1%2%3\n")
++                        .arg(vel.x(), 8, 'f', 4)
++                        .arg(vel.y(), 8, 'f', 4)
++                        .arg(vel.z(), 8, 'f', 4);
++        }
++        else {
++            textStream() << "\n";
++        }
++
++        if(!operation.setProgressValueIntermittent(i)) {
++            return false;    
++        }
++    }
++
++    // write box
++    if(simulationCell) {
++        const AffineTransformation cell = simulationCell->cellMatrix() * Factor;
++        textStream() 
++            << cell(0, 0) << " " << cell(1, 1) << " " << cell(2, 2) << " " 
++            << cell(1, 0) << " " << cell(2, 0) << " " << cell(0, 1) << " " 
++            << cell(2, 1) << " " << cell(0, 2) << " " << cell(1, 2) << "\n";
++    }
++    else {
++        textStream() << "0.0 0.0 0.0\n";
++    }
++
++    return !operation.isCanceled();
++}
++
++}  // namespace Ovito
+diff --exclude build -urN ovito-v3.10.6/src/ovito/particles/export/gro/GROExporter.h ovito-v3.10.6-modified-source/src/ovito/particles/export/gro/GROExporter.h
+--- ovito-v3.10.6/src/ovito/particles/export/gro/GROExporter.h	1970-01-01 08:00:00.000000000 +0800
++++ ovito-v3.10.6-modified-source/src/ovito/particles/export/gro/GROExporter.h	2024-09-09 19:49:30.734271200 +0800
+@@ -0,0 +1,41 @@
++#pragma once
++
++#include <ovito/particles/Particles.h>
++#include "../ParticleExporter.h"
++
++namespace Ovito {
++
++/* \brief Exporter that writes the particles to a GRO data file. */
++class OVITO_PARTICLES_EXPORT GROExporter : public ParticleExporter
++{
++    /// Defines a metaclass specialization for this exporter type.
++    class OOMetaClass : public ParticleExporter::OOMetaClass
++    {
++    public:
++        /// Inherit standard constructor from base meta class.
++        using ParticleExporter::OOMetaClass::OOMetaClass;
++
++        /// Returns the file filter that specifies the extension of files written by this service.
++        virtual QString fileFilter() const override { return QStringLiteral("*"); }
++
++        /// Returns the filter description that is displayed in the drop-down box of the file dialog.
++        virtual QString fileFilterDescription() const override { return tr("GRO File"); }
++    };
++
++    OVITO_CLASS_META(GROExporter, OOMetaClass)
++
++public:
++    /// \brief Constructs a new instance of this class.
++    Q_INVOKABLE GROExporter(ObjectInitializationFlags flags) : ParticleExporter(flags) {}
++
++    /// \brief Indicates whether this file exporter can write more than one animation frame into a single output file.
++    virtual bool supportsMultiFrameFiles() const override { return true; }
++
++protected:
++    /// \brief Writes the particles of one animation frame to the current output file.
++    virtual bool exportData(const PipelineFlowState& state, int frameNumber, const QString& filePath,
++                            MainThreadOperation& operation) override;
++
++};
++
++} // namespace Ovito
+diff --exclude build -urN ovito-v3.10.6/src/ovito/particles/import/gromacs/GroImporter.cpp ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/GroImporter.cpp
+--- ovito-v3.10.6/src/ovito/particles/import/gromacs/GroImporter.cpp	2024-05-02 22:30:30.000000000 +0800
++++ ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/GroImporter.cpp	2024-09-08 20:42:15.058148100 +0800
+@@ -71,8 +71,12 @@
+     for(unsigned long long i = 0; i < 10; i++) {
+         int i1, i2;
+         char s1[6], s2[6];
+-        if(sscanf(stream.readLine(), "%5i%5s%5s%5i", &i1, s1, s2, &i2) != 4 || i1 < 1 || i2 < 1 || qstrlen(stream.line()) < 20)
++        //if(sscanf(stream.readLine(), "%5i%5s%5s%5i", &i1, s1, s2, &i2) != 4 || i1 < 1 || i2 < 1 || qstrlen(stream.line()) < 20)
++        //    return false;
++        char s3[6], s4[6];
++        if(4 != sscanf(stream.readLine(), "%5c%5c%5c%5c", s1, s2, s3, s4) || qstrlen(stream.line()) < 20) {
+             return false;
++        }
+ 
+         // The following extra check is necessary to avoid mistaking an XDATCAR file, which stores the simulation cell
+         // vectors in lines 3-5, for a GRO file (see test case 'POSCAR/XDATCAR.testcase'):
+Binary files ovito-v3.10.6/src/ovito_exe/resources/ovito.aps and ovito-v3.10.6-modified-source/src/ovito_exe/resources/ovito.aps differ

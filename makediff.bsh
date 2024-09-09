@@ -1,0 +1,5 @@
+#!/bin/bash
+
+
+diff --exclude "build" \
+     -urN ovito-v3.10.6 ovito-v3.10.6-modified-source  > code_diff.patch
