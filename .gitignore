@@ -3,9 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-ovito-v3.10.6-modified-source/build/
-ovito-v3.10.6-modified-source/.vs/
+ovito-v3.10.6-modified-source/
 ovito-v3.10.6/
+Ovito-dev3.11.0-nowater_mark_win64/
+*.exe
 
 # User-specific files
 *.rsuser
