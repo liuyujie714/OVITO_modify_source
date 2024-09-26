@@ -5801,8 +5801,8 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
          // vectors in lines 3-5, for a GRO file (see test case 'POSCAR/XDATCAR.testcase'):
 diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/import/gromacs/TprImporter.cpp ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/TprImporter.cpp
 --- ovito-v3.10.6/src/ovito/particles/import/gromacs/TprImporter.cpp	1970-01-01 08:00:00.000000000 +0800
-+++ ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/TprImporter.cpp	2024-09-26 02:43:29.202330500 +0800
-@@ -0,0 +1,225 @@
++++ ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/TprImporter.cpp	2024-09-26 19:09:25.115310000 +0800
+@@ -0,0 +1,251 @@
 +#include <ovito/particles/Particles.h>
 +#include <ovito/particles/objects/Particles.h>
 +#include <ovito/particles/objects/ParticleType.h>
@@ -5886,7 +5886,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +			accVel = particles()->createProperty(Particles::VelocityProperty);
 +		}
 +
-+		// from mtpr
++		// from tpr
 +		const auto& _typenames = tpr->get_name("type");
 +		const auto& _resnames = tpr->get_name("res");
 +		const auto& _atomnames = tpr->get_name("atom");
@@ -5894,6 +5894,9 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +
 +		for (size_t i = 0; i < natoms; i++) 
 +		{
++			// serial, 1-based
++			identifierProperty[i] = i + 1;
++
 +			// need nm to angstrom
 +			accPositions[i][0] = pos[3L * i] * factor;
 +			accPositions[i][1] = pos[3L * i + 1] * factor;
@@ -5910,6 +5913,29 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +			accResids[i] = _resids[i];
 +			accResiduetypes[i] = addNamedType(Particles::OOClass(), residuetypes, QLatin1String(_resnames[i]))->numericId();
 +			accAtomnames[i] = addNamedType(Particles::OOClass(), atomnames, QLatin1String(_atomnames[i]))->numericId();
++		}
++		
++		// reorder by name
++		types->sortElementTypesByName();
++		residuetypes->sortElementTypesByName();
++		atomnames->sortElementTypesByName();
++
++		// atomic charge and mass
++		{
++			// atomic charge, mass
++			try
++			{
++				const auto& _charges = tpr->get_xvf("q");
++				const auto& _masses = tpr->get_xvf("m");
++				BufferWriteAccess<FloatType, access_mode::discard_write> accCharge = particles()->createProperty(DataBuffer::Initialized, Particles::ChargeProperty);
++				BufferWriteAccess<FloatType, access_mode::discard_write> accMass = particles()->createProperty(DataBuffer::Initialized, Particles::MassProperty);
++				boost::copy(_charges, accCharge.begin());
++				boost::copy(_masses, accMass.begin());
++			}
++			catch (...)
++			{
++				// No mass or charges?
++			}
 +		}
 +
 +
@@ -5952,7 +5978,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +				setProgressMaximum(nangles);
 +				setAngleCount(nangles);
 +
-+				BufferWriteAccess<ParticleIndexPair, access_mode::discard_write> atop = angles()->createProperty(Angles::TopologyProperty);
++				BufferWriteAccess<ParticleIndexTriplet, access_mode::discard_write> atop = angles()->createProperty(Angles::TopologyProperty);
 +				auto ptr = atop.begin();
 +				for (const auto& angle : _angles) {
 +					(*ptr)[0] = std::get<0>(angle);
@@ -5981,7 +6007,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +					size_t tempcount = _dihedrals.size();
 +					setProgressMaximum(tempcount);
 +
-+					BufferWriteAccess<ParticleIndexPair, access_mode::discard_write> dtop;
++					BufferWriteAccess<ParticleIndexQuadruplet, access_mode::discard_write> dtop;
 +					// propers dihedrals
 +					if (i == 0) {
 +						ndihedrals = tempcount;
@@ -6010,7 +6036,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +					// No dihedrals or imporpers
 +				}
 +			}
-+		}
++		}		
 +
 +		// show info to Status
 +		state().setStatus(
@@ -6030,8 +6056,8 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +} // end of namespace Ovito
 diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/import/gromacs/TprImporter.h ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/TprImporter.h
 --- ovito-v3.10.6/src/ovito/particles/import/gromacs/TprImporter.h	1970-01-01 08:00:00.000000000 +0800
-+++ ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/TprImporter.h	2024-09-25 22:57:57.028607400 +0800
-@@ -0,0 +1,71 @@
++++ ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/TprImporter.h	2024-09-26 10:35:02.516674600 +0800
+@@ -0,0 +1,63 @@
 +#pragma once
 +
 +#include <ovito/particles/Particles.h>
@@ -6079,12 +6105,6 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +        return std::make_shared<FrameLoader>(request, recenterCell());
 +    }
 +
-+    /// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
-+    virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const FileHandle& file) override {
-+        activateCLocale();
-+        return std::make_shared<FrameFinder>(file);
-+    }
-+
 +private:
 +    /// The format-specific task object that is responsible for reading an input file in the background.
 +    class FrameLoader : public ParticleImporter::FrameLoader
@@ -6094,10 +6114,8 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +        using ParticleImporter::FrameLoader::FrameLoader;
 +
 +    protected:
-+
 +        /// Reads the frame data from the external file.
 +        virtual void loadFile() override;
-+
 +    };
 +};
 +
