@@ -1352,8 +1352,8 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +#endif // !ENUM_H
 diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser/Reader.cpp ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Reader.cpp
 --- ovito-v3.10.6/src/3rdparty/tprparser/Reader.cpp	1970-01-01 08:00:00.000000000 +0800
-+++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Reader.cpp	2024-07-08 00:54:21.970934700 +0800
-@@ -0,0 +1,3254 @@
++++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Reader.cpp	2024-09-30 00:02:45.033707800 +0800
+@@ -0,0 +1,3259 @@
 +#include <set>
 +#include <cstring> // memset
 +#include <cmath> // pow
@@ -1915,10 +1915,15 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +    }
 +    
 +    int atnr = data_->atnr;
-+    myassert(tempLJ.size() == atnr * atnr,
-+        "Assert failed: The size of tempLJ must be square of data_->atnr");
++    msg("atnr= %d\n", atnr);
++    msg("tempLJ.size()= %d\n", (int)tempLJ.size());
++    if (!tempLJ.empty()) {
++        myassert(tempLJ.size() == atnr * atnr,
++            "Assert failed: The size of tempLJ must be square of data_->atnr");
++    }
 +    data_->atomtypesLJ.resize(atnr);
-+    for (int i = 0; i < atnr; i++)
++    // Add tempLJ check, make sure is Not empty << 2024.09.03
++    for (int i = 0; i < atnr && !tempLJ.empty(); i++)
 +    {
 +        for (int j = 0; j < atnr; j++)
 +        {
@@ -4610,9 +4615,9 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +}
 diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser/Reader.h ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Reader.h
 --- ovito-v3.10.6/src/3rdparty/tprparser/Reader.h	1970-01-01 08:00:00.000000000 +0800
-+++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Reader.h	2024-09-26 01:16:15.016789400 +0800
++++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Reader.h	2024-07-07 12:31:12.531055900 +0800
 @@ -0,0 +1,210 @@
-+#ifndef	 READER_H
++#ifndef READER_H
 +#define	 READER_H
 +
 +#include <cstring>
