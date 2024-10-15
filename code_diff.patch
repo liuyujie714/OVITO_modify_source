@@ -11,10 +11,13 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/CMakeList
  IF(OVITO_BUILD_PLUGIN_PARTICLES)
 diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser/Bytes.h ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Bytes.h
 --- ovito-v3.10.6/src/3rdparty/tprparser/Bytes.h	1970-01-01 08:00:00.000000000 +0800
-+++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Bytes.h	2024-07-10 11:47:22.364485300 +0800
-@@ -0,0 +1,495 @@
++++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Bytes.h	2024-10-13 11:35:43.475292000 +0800
+@@ -0,0 +1,504 @@
 +#ifndef BYTES_H
 +#define BYTES_H
++
++// 64 bit fileseek operations
++#define _FILE_OFFSETS_BITS 64
 +
 +#include <stdio.h>
 +#include <stdexcept>
@@ -29,29 +32,33 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +#define MIN(a, b) ((a)<(b)? (a):(b))
 +#define SAVELEN 512
 +
++/* \brief A class for file Serializer in binary mode.
++* Supports big file operator in different system, considered data endianism
++*/
 +class FileSerializer
 +{
 +public:
 +	FileSerializer(const char *fname, const char *mode) : m_fname(fname)
 +	{
-+		fp = fopen(fname, mode);
-+		if (!fp)
-+		{
-+			throw std::runtime_error("Can not open/write file: " + std::string(fname));
-+		}
-+		// is read model
++		// check file mode, must be binary mode
++		char bmode[3] = "xb";
 +		switch (mode[0])
 +		{
 +		case 'r':
-+			m_read = true;
++			m_read = true; bmode[0] = 'r';
 +			break;
 +		case 'w':
-+			m_read = false;
++			m_read = false; bmode[0] = 'w';
 +			break;
++		default:
++			throw std::invalid_argument(std::string("Unknown file open mode: ") + mode);
 +		}
 +
-+		// note
-+		//fprintf(stderr, "NOTE) Open file %s to %s\n", fname, m_read ? "read" : "write");
++		m_fp = fopen(fname, bmode);
++		if (!m_fp)
++		{
++			throw std::runtime_error("Can not open/write file: " + std::string(fname));
++		}
 +
 +		// need endianism swap?
 +		m_rev = is_litendian();
@@ -64,19 +71,21 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +	~FileSerializer()
 +	{
 +		if (m_buffer) delete [] m_buffer;
-+		if (fp) fclose(fp);
++		if (m_fp) {
++			fclose(m_fp); m_fp = nullptr;
++		}
 +		//fprintf(stderr, "NOTE) End of %s to %s\n", m_fname.c_str(), m_read ? "read" : "write");
 +	}
 +
 +	//< get a pointer to file char *buffer
 +	const char* get_file_buffer(long *fsize) const
 +	{
-+		*fsize = m_fsize;
++		*fsize = (long)m_fsize;
 +		return m_buffer;
 +	}
 +
 +	// if is little endian
-+	bool is_litendian() const
++	static bool is_litendian()
 +	{
 +		union 
 +		{
@@ -95,12 +104,12 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +			// read 1 byte
 +			if (vergen >= 27)
 +			{
-+				if (fread(val, 1, 1, fp) != 1) return TPR_FAILED;
++				if (fread_(val, 1, 1) != 1) return TPR_FAILED;
 +			}
 +			else
 +			{
 +				int tempint = 0;
-+				if (fread(&tempint, 4, 1, fp) != 1) return TPR_FAILED;
++				if (fread_(&tempint, 4, 1) != 1) return TPR_FAILED;
 +				if (m_rev) swap4_aligned(&tempint, 1);
 +				*val = (tempint != 0); // return bool
 +			}
@@ -110,14 +119,14 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +			// write 1 byte
 +			if (vergen >= 27)
 +			{
-+				if (fwrite(val, 1, 1, fp) != 1) return TPR_FAILED;
++				if (fwrite_(val, 1, 1) != 1) return TPR_FAILED;
 +			}
 +			else
 +			{
 +				// bool to int
 +				int tempint = static_cast<int>(*val);
 +				if (m_rev) swap4_aligned(&tempint, 1);
-+				if (fwrite(&tempint, 4, 1, fp) != 1) return TPR_FAILED;
++				if (fwrite_(&tempint, 4, 1) != 1) return TPR_FAILED;
 +			}
 +		}
 +		return TPR_SUCCESS;
@@ -133,13 +142,13 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +			// for gmx2020
 +			if (vergen >= 27)
 +			{
-+				if (fread(val, 2, 1, fp) != 1) return TPR_FAILED;
++				if (fread_(val, 2, 1) != 1) return TPR_FAILED;
 +				if (m_rev) swap2_aligned(val, 1);
 +			}
 +			else
 +			{
 +				int temp;
-+				if (fread(&temp, 4, 1, fp) != 1) return TPR_FAILED;
++				if (fread_(&temp, 4, 1) != 1) return TPR_FAILED;
 +				if (m_rev) swap4_aligned(&temp, 1);
 +				*val = static_cast<unsigned short>(temp);
 +			}
@@ -151,13 +160,13 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +			{
 +				unsigned short tempui = *val;
 +				if (m_rev) swap2_aligned(&tempui, 1);
-+				if (fwrite(&tempui, 2, 1, fp) != 1) return TPR_FAILED;
++				if (fwrite_(&tempui, 2, 1) != 1) return TPR_FAILED;
 +			}
 +			else
 +			{
 +				int temp = static_cast<int>(*val);
 +				if (m_rev) swap4_aligned(&temp, 1);
-+				if (fwrite(&temp, 4, 1, fp) != 1) return TPR_FAILED;
++				if (fwrite_(&temp, 4, 1) != 1) return TPR_FAILED;
 +			}
 +		}
 +
@@ -174,12 +183,12 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +			// for gmx>=2020, only read 1 byte
 +			if (vergen >= 27)
 +			{
-+				if (fread(val, 1, 1, fp) != 1) return TPR_FAILED;
++				if (fread_(val, 1, 1) != 1) return TPR_FAILED;
 +			}
 +			else
 +			{
 +				int temp;
-+				if (fread(&temp, 4, 1, fp) != 1) return TPR_FAILED;
++				if (fread_(&temp, 4, 1) != 1) return TPR_FAILED;
 +				if (m_rev) swap4_aligned(&temp, 1);
 +				*val = static_cast<unsigned char>(temp);
 +			}
@@ -189,13 +198,13 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +			// for gmx>=2020, only write 1 byte
 +			if (vergen >= 27)
 +			{
-+				if (fwrite(val, 1, 1, fp) != 1) return TPR_FAILED;
++				if (fwrite_(val, 1, 1) != 1) return TPR_FAILED;
 +			}
 +			else
 +			{
 +				int temp = static_cast<int>(*val);
 +				if (m_rev) swap4_aligned(&temp, 1);
-+				if (fwrite(&temp, 4, 1, fp) != 1) return TPR_FAILED;
++				if (fwrite_(&temp, 4, 1) != 1) return TPR_FAILED;
 +			}
 +		}
 +
@@ -208,14 +217,14 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +		static_assert(sizeof(int) == 4, "sizeof int must be 4");
 +		if (m_read)
 +		{
-+			if (fread(val, 4, 1, fp) != 1) return TPR_FAILED;
++			if (fread_(val, 4, 1) != 1) return TPR_FAILED;
 +			if (m_rev) swap4_aligned(val, 1);
 +		}
 +		else
 +		{
 +			int tempint = *val; // avoid change *val binary order
 +			if (m_rev) swap4_aligned(&tempint, 1);
-+			if (fwrite(&tempint, 4, 1, fp) != 1) return TPR_FAILED;
++			if (fwrite_(&tempint, 4, 1) != 1) return TPR_FAILED;
 +		}
 +		return TPR_SUCCESS;
 +	}
@@ -226,14 +235,14 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +		static_assert(sizeof(int64_t) == 8, "sizeof int64_t must be 8");
 +		if (m_read)
 +		{
-+			if (fread(val, 8, 1, fp) != 1) return TPR_FAILED;
++			if (fread_(val, 8, 1) != 1) return TPR_FAILED;
 +			if (m_rev) swap8_aligned(val, 1);
 +		}
 +		else
 +		{
 +			int64_t tempint64 = *val; // avoid change *val
 +			if (m_rev) swap8_aligned(&tempint64, 1);
-+			if (fwrite(&tempint64, 8, 1, fp) != 1) return TPR_FAILED;
++			if (fwrite_(&tempint64, 8, 1) != 1) return TPR_FAILED;
 +		}
 +		return TPR_SUCCESS;
 +	}
@@ -244,14 +253,14 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +		static_assert(sizeof(float) == 4, "sizeof float must be 4");
 +		if (m_read)
 +		{
-+			if (fread(val, 4, 1, fp) != 1) return TPR_FAILED;
++			if (fread_(val, 4, 1) != 1) return TPR_FAILED;
 +			if (m_rev) swap4_aligned(val, 1);
 +		}
 +		else
 +		{
 +			float tempfloat = *val; // avoid change *val
 +			if (m_rev) swap4_aligned(&tempfloat, 1);
-+			if (fwrite(&tempfloat, 4, 1, fp) != 1) return TPR_FAILED;
++			if (fwrite_(&tempfloat, 4, 1) != 1) return TPR_FAILED;
 +		}
 +		return TPR_SUCCESS;
 +	}
@@ -262,53 +271,37 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +		static_assert(sizeof(double) == 8, "sizeof double must be 8");
 +		if (m_read)
 +		{
-+			if (fread(val, 8, 1, fp) != 1) return TPR_FAILED;
++			if (fread_(val, 8, 1) != 1) return TPR_FAILED;
 +			if (m_rev) swap8_aligned(val, 1);
 +		}
 +		else
 +		{
 +			double tempdouble = *val;
 +			if (m_rev) swap8_aligned(&tempdouble, 1);
-+			if (fwrite(&tempdouble, 8, 1, fp) != 1) return TPR_FAILED;
++			if (fwrite_(&tempdouble, 8, 1) != 1) return TPR_FAILED;
 +		}
 +		return TPR_SUCCESS;
 +	}
 +
 +	//< read/write float/double according to given prec (4/8)
-+	bool do_real(void * val, int prec) const
++	//< NOTE: val must be float * type
++	bool do_real(float *val, int prec) const
 +	{
-+		float	f;
-+		double	d;
 +		switch (prec)
 +		{
 +			case sizeof(float) :
 +			{
-+				if (m_read)
-+				{
-+					if (!do_float(&f)) return TPR_FAILED;
-+					*(static_cast<float*>(val)) = f;
-+				}
-+				else
-+				{
-+					f = *(static_cast<float*>(val));
-+					if (!do_float(&f)) return TPR_FAILED;
-+				}
-+
++				if (!do_float(val)) return TPR_FAILED;
 +				break;
 +			}
 +			case sizeof(double) :
 +			{
-+				if (m_read)
-+				{
-+					if (!do_double(&d)) return TPR_FAILED;
-+					*(static_cast<float*>(val)) = static_cast<float>(d); // double to float
++				double d = static_cast<double>(*val);
++				if (!do_double(&d)) return TPR_FAILED;
++				// should return result to val
++				if (m_read) {
++					*val = static_cast<float>(d);
 +				}
-+				else
-+				{
-+					d = *(static_cast<double*>(val));
-+					if (!do_double(&d)) return TPR_FAILED;
-+				}
-+
 +				break;
 +			}
 +			default:
@@ -373,23 +366,23 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +		size_t ssize = static_cast<size_t>(size); // ignore warning
 +		if (str && size < max)
 +		{
-+			if (fread(str, 1, ssize, fp) != ssize) return TPR_FAILED;
++			if (fread_(str, 1, ssize) != ssize) return TPR_FAILED;
 +			str[ssize] = '\0';
 +			return TPR_SUCCESS;
 +		}
 +		// size >= max
 +		else if (str)
 +		{
-+			if (fread(str, 1, (size_t)max, fp) != (size_t)max) return TPR_FAILED;
++			if (fread_(str, 1, (size_t)max) != (size_t)max) return TPR_FAILED;
 +			str[max - 1] = '\0';
 +			// skip next string
-+			if (fseek(fp, size - max, SEEK_CUR) != 0) return TPR_FAILED;
++			if (fseek_(size - max, SEEK_CUR) != 0) return TPR_FAILED;
 +			return TPR_SUCCESS;
 +		}
 +		else
 +		{
 +			// skip all string and don not store
-+			if (fseek(fp, size, SEEK_CUR) != 0) return TPR_FAILED;
++			if (fseek_(size, SEEK_CUR) != 0) return TPR_FAILED;
 +			return TPR_SUCCESS;
 +		}
 +	}
@@ -407,7 +400,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +				int64_t len;
 +				if (!do_int64(&len)) return TPR_FAILED;
 +				char *buf = new char[len];
-+				if (fread(buf, 1, (size_t)(len), fp) != (size_t)(len)) return TPR_FAILED;
++				if (fread_(buf, 1, (size_t)(len)) != (size_t)(len)) return TPR_FAILED;
 +				for (i = 0; i < MIN(len, (SAVELEN - 1)); i++) {
 +					str[i] = buf[i];
 +				}
@@ -433,7 +426,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +				if (!do_int(&len)) return TPR_FAILED;
 +				if (len % 4) len += 4 - len % 4; // 字节对齐
 +				char* buf = new char[len];
-+				if (fread(buf, 1, (size_t)len, fp) != (size_t)len) return TPR_FAILED;
++				if (fread_(buf, 1, (size_t)len) != (size_t)len) return TPR_FAILED;
 +				for (i = 0; i < MIN(len, (SAVELEN - 1)); i++) {
 +					str[i] = buf[i];
 +				}
@@ -460,21 +453,39 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +		return TPR_SUCCESS;
 +	}
 +
-+	int fseek_(long offset, int orig)
++	int fseek_(int64_t offset, int orig) const
 +	{
-+		return fseek(fp, offset, orig);
++#ifndef _WIN32
++		return fseeko(m_fp, offset, orig);
++#elif defined(_MSC_VER) && !__INTEL_COMPILER
++		return _fseeki64(m_fp, offset, orig);
++#else
++		return fseek(m_fp, offset, orig);
++#endif
 +	}
 +
 +	//< report file pointer position
-+	long ftell_() const
++	int64_t ftell_() const
 +	{
-+		return ftell(fp);
++#ifndef _WIN32
++		return ftello(m_fp);
++#elif defined(_MSC_VER) && !__INTEL_COMPILER
++		return _ftelli64(m_fp);
++#else
++		return ftell(m_fp);
++#endif 
++	}
++
++	//< fread 
++	size_t fread_(void *buffer, size_t elemsize, size_t count) const
++	{
++		return fread(buffer, elemsize, count, m_fp);
 +	}
 +
 +	//< fwrite
-+	size_t fwrite_(const void* buffer, size_t elementsize, size_t count)
++	size_t fwrite_(const void* buffer, size_t elementsize, size_t count) const
 +	{
-+		return fwrite(buffer, elementsize, count, fp);
++		return fwrite(buffer, elementsize, count, m_fp);
 +	}
 +
 +private:
@@ -482,32 +493,30 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +	void get_buffer()
 +	{
 +		fseek_(0, SEEK_END); // file end
-+		long fsize = ftell_();
-+		m_buffer = new char[fsize];
++		m_fsize = ftell_();
++		m_buffer = new char[m_fsize];
 +
 +		fseek_(0, SEEK_SET); // file start
-+		if (fread(m_buffer, fsize, 1, fp) != 1)
++		if (fread_(m_buffer, m_fsize, 1) != 1)
 +		{
 +			throw std::runtime_error("Can not read all binary stream to m_buffer");
 +		}
 +		// restore
 +		fseek_(0, SEEK_SET);
-+
-+		// filesize
-+		m_fsize = fsize;
 +	}
 +
 +private:
-+	FILE		*fp = nullptr; //< file pointer
++	FILE		*m_fp = nullptr; //< file pointer
 +	std::string m_fname = {}; //< file name
 +	bool		m_read = true; //< if read mode
 +	bool		m_rev = false; //< if Reverse endiannism?
 +	char		* m_buffer = nullptr; //< all file binary data in char *
-+	long		m_fsize = 0; // the file size in char
++	int64_t		m_fsize = 0; // the file size in char
 +};
 +
 +
 +#endif // !BYTES_H
++
 diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser/CMakeLists.txt ovito-v3.10.6-modified-source/src/3rdparty/tprparser/CMakeLists.txt
 --- ovito-v3.10.6/src/3rdparty/tprparser/CMakeLists.txt	1970-01-01 08:00:00.000000000 +0800
 +++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/CMakeLists.txt	2024-09-25 20:18:02.170929800 +0800
@@ -1179,8 +1188,8 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +
 diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser/Enum.h ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Enum.h
 --- ovito-v3.10.6/src/3rdparty/tprparser/Enum.h	1970-01-01 08:00:00.000000000 +0800
-+++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Enum.h	2024-07-07 01:56:11.014914500 +0800
-@@ -0,0 +1,169 @@
++++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Enum.h	2024-10-15 10:13:06.283584900 +0800
+@@ -0,0 +1,170 @@
 +#ifndef ENUM_H
 +#define ENUM_H
 +
@@ -1287,11 +1296,12 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +{
 +	resid,
 +	atnum, // atomtype number
++	atomicnum, // atomic number
 +	Count
 +};
 +static const char* c_int_vector[static_cast<int>(IVectorProps::Count)] =
 +{
-+	"resid", "atnum"
++	"resid", "atnum", "atomicnum"
 +};
 +
 +// vector of tpr, resname / atomname / atomtype name
@@ -1352,13 +1362,12 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +#endif // !ENUM_H
 diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser/Reader.cpp ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Reader.cpp
 --- ovito-v3.10.6/src/3rdparty/tprparser/Reader.cpp	1970-01-01 08:00:00.000000000 +0800
-+++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Reader.cpp	2024-09-30 00:02:45.033707800 +0800
-@@ -0,0 +1,3259 @@
++++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Reader.cpp	2024-10-15 19:05:27.896533500 +0800
+@@ -0,0 +1,3271 @@
 +#include <set>
 +#include <cstring> // memset
 +#include <cmath> // pow
 +#include <algorithm>
-+
 +
 +#include "Reader.h"
 +#include "Utils.h"
@@ -1519,14 +1528,13 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +bool TprReader::tpr_mtop()
 +{
 +	//do_mtop starts here, which starts by reading the symtab (do_symtab)
-+	if (!tpr_.do_int(&data_->symtablen)) return TPR_FAILED;
-+    msg("symtablen= %d\n", data_->symtablen);
-+	data_->symtab = new char[SAVELEN * data_->symtablen];
-+	// clear data
-+	memset(data_->symtab, 0, sizeof(char) * SAVELEN * data_->symtablen);
++    int symtablen;
++	if (!tpr_.do_int(&symtablen)) return TPR_FAILED;
++    msg("symtablen= %d\n", symtablen);
++    data_->symtab.resize(symtablen * SAVELEN, '\0'); // clear zero
 +
 +	// 原子类型名称和组名
-+	for (int i = 0; i < data_->symtablen; i++)
++	for (int i = 0; i < symtablen; i++)
 +	{
 +		if (!tpr_.do_string(&data_->symtab[SAVELEN * i], data_->vergen)) return TPR_FAILED;
 +
@@ -1563,6 +1571,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +    data_->atoms.resid.resize(data_->natoms);
 +    data_->atoms.mass.resize(data_->natoms);
 +    data_->atoms.charge.resize(data_->natoms);
++    data_->atoms.atomnumber.resize(data_->natoms);
 +    data_->atoms.type.resize(data_->natoms);
 +    unsigned int idx = 0;
 +    int startedresindex = 1;
@@ -1585,6 +1594,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +
 +                data_->atoms.mass[idx]      = data_->masses[m][k];
 +                data_->atoms.charge[idx]    = data_->charges[m][k];
++                data_->atoms.atomnumber[idx]= data_->atomicnumbers[m][k];
 +                data_->atoms.type[idx]      = data_->types[m][k];
 +                idx++;
 +            }
@@ -2377,7 +2387,8 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +        data_->types[i].resize(data_->atomsinmol[i]);
 +        data_->ptypes[i].resize(data_->atomsinmol[i]);
 +        data_->resids[i].resize(data_->atomsinmol[i]);
-+        data_->atomicnumbers[i].resize(data_->atomsinmol[i]);
++        // initial -1 because data_->filever >= 52
++        data_->atomicnumbers[i].resize(data_->atomsinmol[i], -1); 
 +        for (int j = 0; j < data_->atomsinmol[i]; j++)
 +        {
 +            // 读原子质量，电荷
@@ -4204,6 +4215,17 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +        }
 +        return data_->atoms.atomtypenumber;
 +    }
++    case IVectorProps::atomicnum:
++    {
++        if (data_->atoms.atomnumber.empty() || 
++            std::all_of(data_->atoms.atomnumber.begin(), data_->atoms.atomnumber.end(),
++                [](int val) {return val == -1; })
++            )
++        {
++            throw std::runtime_error("Can not get atomic number information or all -1");
++        }
++        return data_->atoms.atomnumber;
++    }
 +    default:
 +        throw std::invalid_argument(std::string("Unknown keyword: ") + type);
 +        break;
@@ -4510,7 +4532,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +        }
 +
 +        // write ef after
-+        long currpos = newtpr.ftell_(); // 理论上应该当前位置就处于文件结尾了
++        long currpos = static_cast<long>(newtpr.ftell_()); // 理论上应该当前位置就处于文件结尾了
 +        if (currpos < fsize)
 +        {
 +            if (newtpr.fwrite_(&buffer[currpos], (fsize - currpos) * sizeof(char), 1) != 1)
@@ -4615,8 +4637,8 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +}
 diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser/Reader.h ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Reader.h
 --- ovito-v3.10.6/src/3rdparty/tprparser/Reader.h	1970-01-01 08:00:00.000000000 +0800
-+++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Reader.h	2024-07-07 12:31:12.531055900 +0800
-@@ -0,0 +1,210 @@
++++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/Reader.h	2024-10-15 10:11:58.021145100 +0800
+@@ -0,0 +1,209 @@
 +#ifndef READER_H
 +#define	 READER_H
 +
@@ -4628,7 +4650,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +#include "Bytes.h"
 +#include "TprData.h"
 +
-+#define INSERT_POS(prop) data_->property.prop = tpr_.ftell_()
++#define INSERT_POS(prop) data_->property.prop = static_cast<long>(tpr_.ftell_())
 +
 +class TprReader
 +{
@@ -4636,7 +4658,6 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +	const char* fout_ = nullptr;
 +
 +public:
-+	// data_ 不能用memset清零含有模板类的结构体
 +	TprReader(
 +		const char* fname,
 +		bool bGRO = false,
@@ -4764,7 +4785,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +	//< 3. get electric field in vector DIM * 4 = 12
 +	const std::vector<float>& get_xvf(const char* type) const;
 +
-+	//< get int vector, such resid, atomid...
++	//< get int vector, such resid, atomtypenumber, atomnumber...
 +	const std::vector<int>& get_ivector(const char* type) const;
 +
 +	//< get resname, atomname
@@ -4829,8 +4850,8 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +#endif // !READER_H
 diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser/TprData.h ovito-v3.10.6-modified-source/src/3rdparty/tprparser/TprData.h
 --- ovito-v3.10.6/src/3rdparty/tprparser/TprData.h	1970-01-01 08:00:00.000000000 +0800
-+++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/TprData.h	2024-08-24 12:10:42.967678400 +0800
-@@ -0,0 +1,429 @@
++++ ovito-v3.10.6-modified-source/src/3rdparty/tprparser/TprData.h	2024-10-15 19:24:22.702439800 +0800
+@@ -0,0 +1,426 @@
 +#ifndef TPRDATA_H
 +#define TPRDATA_H
 +
@@ -4841,7 +4862,6 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +#include <cassert>
 +#include <stdexcept>
 +#include <tuple> // std::tie
-+
 +
 +#include "define.h"
 +#include "Enum.h"
@@ -4977,10 +4997,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +	// POD clear zero
 +	TprData() = default;
 +
-+	~TprData()
-+	{
-+		if (symtab) delete[] symtab;
-+	}
++	~TprData() {}
 +
 +	int					prec; //< the precision of tpr, 4 or 8
 +	int					filever; //< the version of file format, fver
@@ -4997,8 +5014,8 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +	bool				bBox; //< if has box 
 +	bool				bInter; //< if has inter-molecular bonds
 +	std::vector<float>	box = {}; //< box size
-+	char				* symtab;//< symb name, truncate to 8 characters
-+	int					symtablen, nmoltypes, nmolblock;
++	std::vector<char>   symtab;//< symb name, truncate to SAVELEN characters
++	int					nmoltypes, nmolblock;
 +	int					atnr; // the number of LJ type 
 +
 +	std::vector<int>	atomsinmol;
@@ -5160,10 +5177,11 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +		std::vector<std::string>	atomname;
 +		std::vector<std::string>	resname;
 +		std::vector<std::string>	atomtypename; // atom type name from .ff
-+		std::vector<int>			atomtypenumber; // atomtype number
++		std::vector<int>			atomtypenumber; // atomtype number, -1=unknown, 0=VSite
 +		std::vector<int>			resid;
 +		std::vector<float>			mass;
 +		std::vector<float>			charge;
++		std::vector<int>			atomnumber; // atomic number, -1=unknown, 0=VSite
 +		std::vector<unsigned short>	type; // unused ?
 +	} atoms;
 +
@@ -5806,8 +5824,8 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
          // vectors in lines 3-5, for a GRO file (see test case 'POSCAR/XDATCAR.testcase'):
 diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/import/gromacs/TprImporter.cpp ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/TprImporter.cpp
 --- ovito-v3.10.6/src/ovito/particles/import/gromacs/TprImporter.cpp	1970-01-01 08:00:00.000000000 +0800
-+++ ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/TprImporter.cpp	2024-09-26 19:09:25.115310000 +0800
-@@ -0,0 +1,251 @@
++++ ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/TprImporter.cpp	2024-10-16 00:57:57.081289500 +0800
+@@ -0,0 +1,258 @@
 +#include <ovito/particles/Particles.h>
 +#include <ovito/particles/objects/Particles.h>
 +#include <ovito/particles/objects/ParticleType.h>
@@ -5861,6 +5879,8 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +		Property *positions = particles()->createProperty(DataBuffer::Initialized, Particles::PositionProperty);
 +		Property *types = particles()->createProperty(DataBuffer::Initialized, Particles::TypeProperty);
 +		Property *atomnames = particles()->createProperty(QStringLiteral("Atom Name"), Property::Int32);
++		// gmx forcefield atom type
++		Property *gmxtypes = particles()->createProperty(QStringLiteral("Forcefield Type"), Property::Int32);
 +		Property *residuetypes = particles()->createProperty(QStringLiteral("Residue Type"), Property::Int32);
 +		Property *resids = particles()->createProperty(QStringLiteral("Residue Identifier"), Property::Int64);
 +		// particle serial, 1-based
@@ -5870,6 +5890,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +		// other access property
 +		BufferWriteAccess<Point3, access_mode::read_write>     accPositions(positions);
 +		BufferWriteAccess<int32_t, access_mode::discard_write> accTypes(types);
++		BufferWriteAccess<int32_t, access_mode::discard_write> accgmxtypes(gmxtypes);
 +		BufferWriteAccess<int32_t, access_mode::discard_write> accAtomnames(atomnames);
 +		BufferWriteAccess<int32_t, access_mode::discard_write> accResiduetypes(residuetypes);
 +		BufferWriteAccess<int64_t, access_mode::discard_write> accResids(resids);
@@ -5877,6 +5898,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +		// user interface titles
 +		atomnames->setTitle(tr("Atom names"));
 +		residuetypes->setTitle(tr("Residue types"));
++		gmxtypes->setTitle(tr("Forcefield Types"));
 +
 +		// if has velocity
 +		bool hasVel = true;
@@ -5914,7 +5936,9 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +				accVel[i][2] = vel->at(3L * i + 2) * factor;
 +			}
 +
-+			accTypes[i] = addNamedType(Particles::OOClass(), types, QLatin1String(_typenames[i]))->numericId();
++			// Particle Types name use atom name is good for auto get vdw radius
++			accTypes[i] = addNamedType(Particles::OOClass(), types, QLatin1String(_atomnames[i]))->numericId();
++			accgmxtypes[i] = addNamedType(Particles::OOClass(), gmxtypes, QLatin1String(_typenames[i]))->numericId();
 +			accResids[i] = _resids[i];
 +			accResiduetypes[i] = addNamedType(Particles::OOClass(), residuetypes, QLatin1String(_resnames[i]))->numericId();
 +			accAtomnames[i] = addNamedType(Particles::OOClass(), atomnames, QLatin1String(_atomnames[i]))->numericId();
@@ -5924,6 +5948,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +		types->sortElementTypesByName();
 +		residuetypes->sortElementTypesByName();
 +		atomnames->sortElementTypesByName();
++		gmxtypes->sortElementTypesByName();
 +
 +		// atomic charge and mass
 +		{
