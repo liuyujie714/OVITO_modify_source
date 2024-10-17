@@ -5567,6 +5567,29 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/tprparser
 +FILE* efopen(const char* fname, const char* mod);
 +
 +#endif // !UTILS_H
+diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/xdrfile/CMakeLists.txt ovito-v3.10.6-modified-source/src/3rdparty/xdrfile/CMakeLists.txt
+--- ovito-v3.10.6/src/3rdparty/xdrfile/CMakeLists.txt	2024-05-02 22:30:30.000000000 +0800
++++ ovito-v3.10.6-modified-source/src/3rdparty/xdrfile/CMakeLists.txt	2024-10-16 11:48:01.328620900 +0800
+@@ -30,6 +30,7 @@
+ ADD_LIBRARY(xdrfile
+     xdrfile.c
+     xdrfile_xtc.c
++    xdrfile_trr.c
+ )
+ 
+ # Give our library file a new name to not confuse it with any system versions of the library.
+diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/3rdparty/xdrfile/xdrfile_trr.c ovito-v3.10.6-modified-source/src/3rdparty/xdrfile/xdrfile_trr.c
+--- ovito-v3.10.6/src/3rdparty/xdrfile/xdrfile_trr.c	2024-05-02 22:30:30.000000000 +0800
++++ ovito-v3.10.6-modified-source/src/3rdparty/xdrfile/xdrfile_trr.c	2024-10-16 12:39:14.015087800 +0800
+@@ -70,7 +70,7 @@
+   char buf[BUFSIZE];
+ 
+   if (xdrfile_read_int(&magic, 1, xd) != 1)
+-    return exdrINT;
++      return bRead ? exdrENDOFFILE : exdrINT;
+ 
+   if (bRead) {
+     if (xdrfile_read_int(&slen, 1, xd) != 1)
 diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/core/utilities/io/CompressedTextReader.cpp ovito-v3.10.6-modified-source/src/ovito/core/utilities/io/CompressedTextReader.cpp
 --- ovito-v3.10.6/src/ovito/core/utilities/io/CompressedTextReader.cpp	2024-05-02 22:30:30.000000000 +0800
 +++ ovito-v3.10.6-modified-source/src/ovito/core/utilities/io/CompressedTextReader.cpp	2024-09-25 20:03:49.391338400 +0800
@@ -5598,16 +5621,18 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/core/utiliti
      else {
 diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/CMakeLists.txt ovito-v3.10.6-modified-source/src/ovito/particles/CMakeLists.txt
 --- ovito-v3.10.6/src/ovito/particles/CMakeLists.txt	2024-05-02 22:30:30.000000000 +0800
-+++ ovito-v3.10.6-modified-source/src/ovito/particles/CMakeLists.txt	2024-09-26 00:59:53.337785800 +0800
-@@ -86,6 +86,7 @@
++++ ovito-v3.10.6-modified-source/src/ovito/particles/CMakeLists.txt	2024-10-16 11:18:17.618307000 +0800
+@@ -86,7 +86,9 @@
      import/cif/CIFImporter.cpp
      import/cif/mmCIFImporter.cpp
      import/gromacs/GroImporter.cpp
 +    import/gromacs/TprImporter.cpp
      import/gromacs/XTCImporter.cpp
++    import/gromacs/TRRImporter.cpp
      import/vtk/ParaViewVTPParticleImporter.cpp
      import/vtk/ParaViewVTPBondsImporter.cpp
-@@ -96,6 +97,7 @@
+     export/ParticleExporter.cpp
+@@ -96,6 +98,7 @@
      export/lammps/LAMMPSDataExporter.cpp
      export/lammps/LAMMPSDumpExporter.cpp
      export/xyz/XYZExporter.cpp
@@ -5615,7 +5640,7 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/CM
      export/imd/IMDExporter.cpp
      export/gsd/GSDExporter.cpp
      util/NearestNeighborFinder.cpp
-@@ -129,7 +131,7 @@
+@@ -129,7 +132,7 @@
  OVITO_STANDARD_PLUGIN(Particles
      SOURCES ${SourceFiles}
      PLUGIN_DEPENDENCIES Mesh Grid StdObj Delaunay
@@ -6151,3 +6176,338 @@ diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/im
 +
 +
 +} // end of namespace Ovito
+diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/import/gromacs/TRRImporter.cpp ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/TRRImporter.cpp
+--- ovito-v3.10.6/src/ovito/particles/import/gromacs/TRRImporter.cpp	1970-01-01 08:00:00.000000000 +0800
++++ ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/TRRImporter.cpp	2024-10-17 23:27:35.040376600 +0800
+@@ -0,0 +1,215 @@
++////////////////////////////////////////////////////////////////////////////////////////
++//
++//  Copyright 2023 OVITO GmbH, Germany
++//
++//  This file is part of OVITO (Open Visualization Tool).
++//
++//  OVITO is free software; you can redistribute it and/or modify it either under the
++//  terms of the GNU General Public License version 3 as published by the Free Software
++//  Foundation (the "GPL") or, at your option, under the terms of the MIT License.
++//  If you do not alter this notice, a recipient may use your version of this
++//  file under either the GPL or the MIT License.
++//
++//  You should have received a copy of the GPL along with this program in a
++//  file LICENSE.GPL.txt.  You should have received a copy of the MIT License along
++//  with this program in a file LICENSE.MIT.txt
++//
++//  This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
++//  either express or implied. See the GPL or the MIT License for the specific language
++//  governing rights and limitations.
++//
++////////////////////////////////////////////////////////////////////////////////////////
++
++#include <ovito/particles/Particles.h>
++#include <ovito/particles/objects/Particles.h>
++#include <ovito/particles/objects/ParticleType.h>
++#include <ovito/stdobj/simcell/SimulationCell.h>
++#include "TRRImporter.h"
++
++#include <xdrfile/xdrfile.h>
++#include <xdrfile/xdrfile_trr.h>
++
++namespace Ovito {
++
++IMPLEMENT_OVITO_CLASS(TRRImporter);
++
++class TRRFile
++{
++public:
++
++    struct Frame {
++        int step;
++        float time;
++        float lambda;
++        int has_prop = 0; // HASX/HASV/HASF
++        Matrix_3<float> cell;
++        std::vector<Point_3<float>> xyz;
++        std::vector<Point_3<float>> vel; // velocity
++        std::vector<Point_3<float>> force; // force
++    };
++
++    ~TRRFile() {
++        close();
++    }
++
++    void open(const char* filename) {
++        close();
++        int returnCode = read_trr_natoms((char *)filename, &_numAtoms);
++        if(returnCode != exdrOK || _numAtoms <= 0)
++            throw Exception(TRRImporter::tr("Error opening TRR file (error code %1).").arg(returnCode));
++        _file = xdrfile_open(filename, "r");
++        if(!_file)
++            throw Exception(TRRImporter::tr("Error opening TRR file."));
++        _eof = false;
++    }
++
++    void close() {
++        if(_file) {
++            if(xdrfile_close(_file) != exdrOK)
++                qWarning() << "TRRImporter: Failure reported by xdrfile_close()";
++            _file = nullptr;
++        }
++    }
++
++    Frame read() {
++        OVITO_ASSERT(_file);
++        OVITO_ASSERT(!_eof);
++        Frame frame;
++        frame.xyz.resize(_numAtoms);
++        frame.vel.resize(_numAtoms);
++        frame.force.resize(_numAtoms);
++        int returnCode = read_trr(_file, _numAtoms, &frame.step, &frame.time, &frame.lambda,
++            reinterpret_cast<matrix&>(frame.cell), 
++            reinterpret_cast<rvec*>(frame.xyz.data()), 
++            reinterpret_cast<rvec*>(frame.vel.data()), 
++            reinterpret_cast<rvec*>(frame.force.data()), 
++            &frame.has_prop);
++        // modified do_trnheader: add exdrENDOFFILE
++        if(returnCode != exdrOK && returnCode != exdrENDOFFILE)
++            throw Exception(TRRImporter::tr("Error reading TRR file (code %1).").arg(returnCode));
++        if(returnCode == exdrENDOFFILE)
++            _eof = true;
++        return frame;
++    }
++
++    void seek(qint64 offset) {
++        int returnCode = xdr_seek(_file, offset, SEEK_SET);
++        if(returnCode != exdrOK)
++            throw Exception(TRRImporter::tr("Error seeking in TRR file (code %1).").arg(returnCode));
++    }
++
++    qint64 byteOffset() const {
++        OVITO_ASSERT(_file);
++        return xdr_tell(_file);
++    }
++
++    bool eof() const { return _eof; }
++
++private:
++
++    XDRFILE* _file = nullptr;
++    int _numAtoms = 0;
++    bool _eof = false;
++};
++
++/******************************************************************************
++* Checks if the given file has format that can be read by this importer.
++******************************************************************************/
++bool TRRImporter::OOMetaClass::checkFileFormat(const FileHandle& file) const
++{
++    return file.sourceUrl().fileName().endsWith(QStringLiteral(".trr"), Qt::CaseInsensitive);
++}
++
++/******************************************************************************
++* Scans the data file and builds a list of source frames.
++******************************************************************************/
++void TRRImporter::FrameFinder::discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames)
++{
++    setProgressText(tr("Scanning file %1").arg(fileHandle().toString()));
++    setProgressMaximum(QFileInfo(fileHandle().localFilePath()).size());
++
++    // Open TRR file for reading.
++    TRRFile file;
++    file.open(QFile::encodeName(QDir::toNativeSeparators(fileHandle().localFilePath())).constData());
++
++    Frame frame(fileHandle());
++    while(!file.eof() && !isCanceled()) {
++        frame.byteOffset = file.byteOffset();
++        if(!setProgressValue(frame.byteOffset))
++            return;
++
++        // Parse trajectory frame.
++        TRRFile::Frame trrFrame = file.read();
++        if(file.eof()) break;
++
++        // Create a new record for the timestep.
++        frame.label = tr("Timestep %1").arg(trrFrame.step);
++        frames.push_back(frame);
++    }
++}
++
++/******************************************************************************
++* Parses the given input file.
++******************************************************************************/
++void TRRImporter::FrameLoader::loadFile()
++{
++    // Open file for reading.
++    setProgressText(tr("Reading TRR file %1").arg(fileHandle().toString()));
++
++    // Open TRR file for reading.
++    TRRFile file;
++    file.open(QFile::encodeName(QDir::toNativeSeparators(fileHandle().localFilePath())).constData());
++
++    // Seek to byte offset of requested trajectory frame.
++    if(frame().byteOffset != 0)
++        file.seek(frame().byteOffset);
++
++    // Read trajectory frame data.
++    TRRFile::Frame trrFrame = file.read();
++
++    // Transfer atomic coordinates to property storage. Also convert from nanometer units to angstroms.
++    size_t numParticles = trrFrame.xyz.size();
++    setParticleCount(numParticles);
++    BufferWriteAccess<Point3, access_mode::discard_write> posProperty = particles()->createProperty(Particles::PositionProperty);
++    std::transform(trrFrame.xyz.cbegin(), trrFrame.xyz.cend(), posProperty.begin(), [](const Point_3<float>& p) {
++        return (p * 10.0f).toDataType<FloatType>();
++    });
++    posProperty.reset();
++
++    // if velocity, unit = nm/ps
++    if (trrFrame.has_prop & HASV)
++    {
++        BufferWriteAccess<Point3, access_mode::discard_write> velProperty = particles()->createProperty(Particles::VelocityProperty);
++        std::transform(trrFrame.vel.cbegin(), trrFrame.vel.cend(), velProperty.begin(), [](const Point_3<float>& p) {
++            return p.toDataType<FloatType>();
++            });
++        velProperty.reset();
++    }
++
++    // if force, unit = kj/mol/nm
++    if (trrFrame.has_prop & HASF)
++    {
++        BufferWriteAccess<Point3, access_mode::discard_write> forceProperty = particles()->createProperty(Particles::ForceProperty);
++        std::transform(trrFrame.force.cbegin(), trrFrame.force.cend(), forceProperty.begin(), [](const Point_3<float>& p) {
++            return p.toDataType<FloatType>();
++            });
++        forceProperty.reset();
++    }
++
++    // Convert cell vectors from nanometers to angstroms.
++    simulationCell()->setCellMatrix(AffineTransformation((trrFrame.cell * 10.0f).toDataType<FloatType>()));
++
++    state().setAttribute(QStringLiteral("Timestep"), QVariant::fromValue(trrFrame.step), pipelineNode());
++    state().setAttribute(QStringLiteral("Time"), QVariant::fromValue((FloatType)trrFrame.time), pipelineNode());
++    
++    // show some info
++    state().setStatus(
++        tr("Total %1 atoms\nUnits: coords (Angstrom), velocity (nm/ps), force (kJ/mol/nm)")
++        .arg(numParticles)
++    );
++
++    // Call base implementation to finalize the loaded particle data.
++    ParticleImporter::FrameLoader::loadFile();
++}
++
++}   // End of namespace
+diff --exclude build --exclude .vscode -urN ovito-v3.10.6/src/ovito/particles/import/gromacs/TRRImporter.h ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/TRRImporter.h
+--- ovito-v3.10.6/src/ovito/particles/import/gromacs/TRRImporter.h	1970-01-01 08:00:00.000000000 +0800
++++ ovito-v3.10.6-modified-source/src/ovito/particles/import/gromacs/TRRImporter.h	2024-10-16 11:21:48.197541700 +0800
+@@ -0,0 +1,112 @@
++////////////////////////////////////////////////////////////////////////////////////////
++//
++//  Copyright 2023 OVITO GmbH, Germany
++//
++//  This file is part of OVITO (Open Visualization Tool).
++//
++//  OVITO is free software; you can redistribute it and/or modify it either under the
++//  terms of the GNU General Public License version 3 as published by the Free Software
++//  Foundation (the "GPL") or, at your option, under the terms of the MIT License.
++//  If you do not alter this notice, a recipient may use your version of this
++//  file under either the GPL or the MIT License.
++//
++//  You should have received a copy of the GPL along with this program in a
++//  file LICENSE.GPL.txt.  You should have received a copy of the MIT License along
++//  with this program in a file LICENSE.MIT.txt
++//
++//  This software is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND,
++//  either express or implied. See the GPL or the MIT License for the specific language
++//  governing rights and limitations.
++//
++////////////////////////////////////////////////////////////////////////////////////////
++
++#pragma once
++
++
++#include <ovito/particles/Particles.h>
++#include <ovito/particles/import/ParticleImporter.h>
++#include <ovito/particles/objects/Particles.h>
++#include <ovito/core/dataset/DataSetContainer.h>
++
++namespace Ovito {
++
++/**
++ * File parser for GROMACS TRR trajectory files.
++ */
++class OVITO_PARTICLES_EXPORT TRRImporter : public ParticleImporter
++{
++    /// Defines a metaclass specialization for this importer type.
++    class OOMetaClass : public ParticleImporter::OOMetaClass
++    {
++    public:
++        /// Inherit standard constructor from base meta class.
++        using ParticleImporter::OOMetaClass::OOMetaClass;
++
++        /// Returns the list of file formats that can be read by this importer class.
++        virtual Ovito::span<const SupportedFormat> supportedFormats() const override {
++            static const SupportedFormat formats[] = {{ QStringLiteral("*.trr"), tr("Gromacs Full Precision Trajectory Files") }};
++            return formats;
++        }
++
++        /// Checks if the given file has format that can be read by this importer.
++        virtual bool checkFileFormat(const FileHandle& file) const override;
++    };
++
++    OVITO_CLASS_META(TRRImporter, OOMetaClass)
++
++public:
++
++    /// \brief Constructs a new instance of this class.
++    Q_INVOKABLE TRRImporter(ObjectInitializationFlags flags) : ParticleImporter(flags) {
++        setMultiTimestepFile(true);
++        setRecenterCell(true);
++    }
++
++    /// Returns the title of this object.
++    virtual QString objectTitle() const override { return tr("TRR"); }
++
++    /// Indicates whether this file importer type loads particle trajectories.
++    virtual bool isTrajectoryFormat() const override { return true; }
++
++    /// Creates an asynchronous loader object that loads the data for the given frame from the external file.
++    virtual FileSourceImporter::FrameLoaderPtr createFrameLoader(const LoadOperationRequest& request) override {
++        return std::make_shared<FrameLoader>(request, recenterCell());
++    }
++
++    /// Creates an asynchronous frame discovery object that scans the input file for contained animation frames.
++    virtual std::shared_ptr<FileSourceImporter::FrameFinder> createFrameFinder(const FileHandle& file) override {
++        return std::make_shared<FrameFinder>(file);
++    }
++
++private:
++
++    /// The format-specific task object that is responsible for reading an input file in the background.
++    class FrameLoader : public ParticleImporter::FrameLoader
++    {
++    public:
++
++        /// Constructor.
++        using ParticleImporter::FrameLoader::FrameLoader;
++
++    protected:
++
++        /// Reads the frame data from the external file.
++        virtual void loadFile() override;
++    };
++
++    /// The format-specific task object that is responsible for scanning the input file for animation frames.
++    class FrameFinder : public FileSourceImporter::FrameFinder
++    {
++    public:
++
++        /// Inherit constructor from base class.
++        using FileSourceImporter::FrameFinder::FrameFinder;
++
++    protected:
++
++        /// Scans the data file and builds a list of source frames.
++        virtual void discoverFramesInFile(QVector<FileSourceImporter::Frame>& frames) override;
++    };
++};
++
++}   // End of namespace

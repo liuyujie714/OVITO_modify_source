@@ -2,8 +2,8 @@
 
 ; HM NIS Edit Wizard helper defines
 !define PRODUCT_NAME "Ovito3.10.6"
-!define PRODUCT_VERSION " "
-!define PRODUCT_PUBLISHER "XXX"
+!define PRODUCT_VERSION "1.0"
+!define PRODUCT_PUBLISHER "ovito"
 !define PRODUCT_WEB_SITE "https://www.ovito.org/"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\ovito.exe"
 !define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
@@ -1150,6 +1150,8 @@ Section "MainSection" SEC01
   File "OVITO\plugins\tls\qopensslbackend.dll"
   File "OVITO\plugins\tls\qschannelbackend.dll"
   SetOutPath "$INSTDIR"
+  File "OVITO\PyScript.dll"
+  File "OVITO\PyScriptGui.dll"
   File "OVITO\qt.conf"
   File "OVITO\Qt6Core.dll"
   File "OVITO\Qt6Gui.dll"
@@ -1171,6 +1173,7 @@ Section "MainSection" SEC01
   File "OVITO\VoroTop.ovito.dll"
   File "OVITO\VoroTopGui.ovito.dll"
   File "OVITO\zlib.dll"
+  File "OVITO\zlib1.dll"
 SectionEnd
 
 Section -AdditionalIcons
@@ -1204,6 +1207,7 @@ FunctionEnd
 Section Uninstall
   Delete "$INSTDIR\${PRODUCT_NAME}.url"
   Delete "$INSTDIR\uninst.exe"
+  Delete "$INSTDIR\zlib1.dll"
   Delete "$INSTDIR\zlib.dll"
   Delete "$INSTDIR\VoroTopGui.ovito.dll"
   Delete "$INSTDIR\VoroTop.ovito.dll"
@@ -1225,6 +1229,8 @@ Section Uninstall
   Delete "$INSTDIR\Qt6Gui.dll"
   Delete "$INSTDIR\Qt6Core.dll"
   Delete "$INSTDIR\qt.conf"
+  Delete "$INSTDIR\PyScriptGui.dll"
+  Delete "$INSTDIR\PyScript.dll"
   Delete "$INSTDIR\plugins\tls\qschannelbackend.dll"
   Delete "$INSTDIR\plugins\tls\qopensslbackend.dll"
   Delete "$INSTDIR\plugins\tls\qcertonlybackend.dll"
