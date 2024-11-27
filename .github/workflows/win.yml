@@ -1,0 +1,23 @@
+name: Build Windows x64 Ovito
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  ovito_version: "3.10.6"
+
+jobs:
+  Windows:
+    runs-on: windows-2022
+    if: github.event.repository.owner.id == github.event.sender.id
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+    
+      - name: Download dependencies
+        run: |
+          choco install -y qt6-base-dev
+          vcpkg install zlib boost hdf5 netcdf-c ffmpeg --triplet x64-windows
+
