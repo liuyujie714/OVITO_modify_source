@@ -54,19 +54,12 @@ jobs:
       #     echo ${{steps.setup-ffmpeg.outputs.ffmpeg-path}}
       #     vcpkg install zlib hdf5 netcdf-c libssh --triplet x64-windows-release
 
-      - name: Configure build for amd64
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: amd64
-          # must use v142 to avoid compile errors for ninja about calc_verletbuf.cpp code
-          toolset: 14.29
-          
       - name: Build Ovito
-        shell: cmd
+        shell: pwsh
         run: |
           dir
           cd ${{ env.ovito_src }} && md build && cd build
-          cmake .. -DCMAKE_INSTALL_PREFIX=C:\OVITO_${{ env.ovito_version }}_Win -DOVITO_BUILD_PROFESSIONAL=ON  -DOVITO_BUILD_SSH_CLIENT=ON  -DBoost_INCLUDE_DIR=C:\boost -DCMAKE_EXE_LINKER_FLAGS="\SUBSYSTEM:windows \ENTRY:mainCRTStartup" -DOPENSSL_ROOT_DIR=C:\vcpkg\packages\openssl_x64-windows -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\6.6.2\msvc2019_64\lib\cmake:C:\vcpkg\packages\zlib_x64-windows-release;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" 
+          cmake .. -DCMAKE_INSTALL_PREFIX=C:\OVITO_${{ env.ovito_version }}_Win -DOVITO_BUILD_PROFESSIONAL=ON  -DOVITO_BUILD_SSH_CLIENT=ON  -DBoost_INCLUDE_DIR=C:\boost -DCMAKE_EXE_LINKER_FLAGS="\SUBSYSTEM:windows \ENTRY:mainCRTStartup" -DOPENSSL_ROOT_DIR=C:\vcpkg\packages\openssl_x64-windows -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\6.6.2\msvc2019_64\lib\cmake:C:\vcpkg\packages\zlib_x64-windows-release;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release"  -T "v142" -A x64
 
           cmake --build . --target INSTALL --config Release
 
