@@ -41,11 +41,12 @@ jobs:
           cache-key-prefix: 'install-qt-action'
 
       - name: Install ffmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v3
+        uses: FedericoCarboni/setup-ffmpeg@v3.1
         id: setup-ffmpeg
         with:
           ffmpeg-version: release
           architecture: x64
+          linking-type: shared
           github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
 
       - name: Download dependencies
@@ -64,6 +65,6 @@ jobs:
             -DBoost_INCLUDE_DIR=C:/boost \
             -DCMAKE_EXE_LINKER_FLAGS="/SUBSYSTEM:windows /ENTRY:mainCRTStartup" \
             -DOPENSSL_ROOT_DIR=C:/vcpkg/packages/openssl_x64-windows \
-            -DCMAKE_PREFIX_PATH=C:/Qt6/Qt/6.6.2/msvc2019_64/lib/cmake;C:/vcpkg/packages/zlib_x64-windows;C:/vcpkg/packages/hdf5_x64-windows;C:/vcpkg/packages/netcdf-c_x64-windows;C:/vcpkg/packages/libssh_x64-windows
+            -DCMAKE_PREFIX_PATH=C:/Qt6/Qt/6.6.2/msvc2019_64/lib/cmake;C:/vcpkg/packages/zlib_x64-windows-release;C:/vcpkg/packages/hdf5_x64-windows-release;C:/vcpkg/packages/netcdf-c_x64-windows-release;C:/vcpkg/packages/libssh_x64-windows-release
 
           cmake --build . --target INSTALL --config Release
