@@ -30,6 +30,7 @@ jobs:
       - name: List boost
         shell: bash
         run: 
+          ls C:/*
           ls ${{steps.boost.outputs.BOOST_ROOT}}/*
           ls ${{steps.boost.outputs.BOOST_ROOT}}/boost/*
 
