@@ -38,7 +38,7 @@ jobs:
       #     modules: 'qtcharts qtwebengine'
       #     archives: 'qtbase qtsvg'
       #     cache: 'false'
-          cache-key-prefix: 'install-qt-action'
+      #     cache-key-prefix: 'install-qt-action'
 
       - name: Install ffmpeg
         uses: FedericoCarboni/setup-ffmpeg@v3
