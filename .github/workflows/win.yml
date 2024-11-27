@@ -7,6 +7,7 @@ on:
 
 env:
   ovito_version: "3.10.6"
+  ovito_src: "ovito-v3.10.6-modified-source"
 
 jobs:
   Windows:
@@ -16,14 +17,14 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Install boost
-        uses: MarkusJx/install-boost@v2.4.4
-        id: install-boost
-        with:
-            boost_version: 1.71.0
-            platform_version: 2019
-            # install to C:\boost
-            boost_install_dir: C:\
+      # - name: Install boost
+      #   uses: MarkusJx/install-boost@v2.4.4
+      #   id: install-boost
+      #   with:
+      #       boost_version: 1.71.0
+      #       platform_version: 2019
+      #       # install to C:\boost
+      #       boost_install_dir: C:\
 
       - name: Install Qt6
         uses: jurplel/install-qt-action@v4
@@ -31,7 +32,7 @@ jobs:
           version: '6.6.2'
           host: 'windows'
           target: 'desktop'
-          arch: 'win64_msvc2022_64'
+          arch: 'win64_msvc2019_64'
           dir: C:\Qt6
           install-deps: 'true'
           modules: 'qtcharts qtwebengine'
@@ -42,3 +43,7 @@ jobs:
       - name: Download dependencies
         run: |
           vcpkg install zlib hdf5 netcdf-c ffmpeg --triplet x64-windows
+
+      # - name: Build Ovito
+      #   run: |
+          
