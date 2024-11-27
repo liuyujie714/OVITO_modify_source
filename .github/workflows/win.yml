@@ -52,14 +52,15 @@ jobs:
         run: |
           vcpkg install zlib hdf5 netcdf-c libssh --triplet x64-windows-release
 
-      # - name: Build Ovito
-      #   shell: bash
-      #   run: |
-      #     cd ${{ env.ovito_src }} && mkdir build && cd build
-      #     cmake .. \
-      #       -DCMAKE_INSTALL_PREFIX=C:/OVITO_${{ env.ovito_version }}_Win \
-      #       -DOVITO_BUILD_PROFESSIONAL=ON \
-      #       -DOVITO_BUILD_SSH_CLIENT=ON \
-      #       -DBoost_INCLUDE_DIR=C:/boost
-      #       -DOPENSSL_ROOT_DIR=C:/vcpkg/packages/openssl_x64-windows \
-      #       -DCMAKE_PREFIX_PATH=C/Qt6/6.6.2\msvc2020_64\lib\cmakeC:/vcpkg/packages/zlib_x64-windows;C:/vcpkg/packages/hdf5_x64-windows;C:/vcpkg/packages/netcdf-c_x64-windows;C:/vcpkg/packages/libssh_x64-windows
+      - name: Build Ovito
+        shell: bash
+        run: |
+          cd ${{ env.ovito_src }} && mkdir build && cd build
+          cmake .. \
+            -DCMAKE_INSTALL_PREFIX=C:/OVITO_${{ env.ovito_version }}_Win \
+            -DOVITO_BUILD_PROFESSIONAL=ON \
+            -DOVITO_BUILD_SSH_CLIENT=ON \
+            -DBoost_INCLUDE_DIR=C:/boost
+            -DOPENSSL_ROOT_DIR=C:/vcpkg/packages/openssl_x64-windows \
+            -DCMAKE_PREFIX_PATH=C:/Qt6/Qt/6.6.2/msvc2019_64/lib/cmake;C:/vcpkg/packages/zlib_x64-windows;C:/vcpkg/packages/hdf5_x64-windows;C:/vcpkg/packages/netcdf-c_x64-windows;C:/vcpkg/packages/libssh_x64-windows
+
