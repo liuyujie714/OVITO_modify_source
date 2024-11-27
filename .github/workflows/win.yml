@@ -40,18 +40,17 @@ jobs:
       #     cache: 'false'
       #     cache-key-prefix: 'install-qt-action'
 
-      - name: Install ffmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v3
-        id: setup-ffmpeg
-        with:
-          ffmpeg-version: release
-          architecture: x64
-          linking-type: shared
-          github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
+      # - name: Install ffmpeg
+      #   uses: FedericoCarboni/setup-ffmpeg@v3
+      #   id: setup-ffmpeg
+      #   with:
+      #     ffmpeg-version: release
+      #     architecture: x64
+      #     github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
 
-      # - name: Download dependencies
-      #   run: |
-      #     vcpkg install zlib hdf5 netcdf-c ffmpeg --triplet x64-windows
+      - name: Download dependencies
+        run: |
+          vcpkg install zlib hdf5 netcdf-c --triplet x64-windows
 
       # - name: Build Ovito
       #   run: |
