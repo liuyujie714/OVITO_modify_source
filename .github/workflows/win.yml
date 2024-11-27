@@ -29,10 +29,10 @@ jobs:
 
       - name: List boost
         shell: bash
-        run: 
+        run: |
           ls C:/*
-          ls ${{steps.boost.outputs.BOOST_ROOT}}/*
-          ls ${{steps.boost.outputs.BOOST_ROOT}}/boost/*
+          ls C:/boost/*
+          ls C:/boost/boost/*
 
       # - name: Install Qt6
       #   uses: jurplel/install-qt-action@v4
