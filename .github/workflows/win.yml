@@ -20,7 +20,7 @@ jobs:
 
       - name: Install boost
         uses: MarkusJx/install-boost@v2.4.4
-        id: install-boost
+        id: boost
         with:
             boost_version: 1.71.0
             platform_version: 2019
@@ -47,6 +47,7 @@ jobs:
           wget https://www.gyan.dev/ffmpeg/builds/packages/${{env.ffpmeg_version}}.7z
           7z x ${{env.ffpmeg_version}}.7z
           Move-Item -Path ${{env.ffpmeg_version}} -Destination C:\
+          Remove-Item -Path ${{env.ffpmeg_version}}.7z
 
       - name: Download dependencies
         run: |
@@ -58,7 +59,9 @@ jobs:
           dir
           pip install cmake==3.28
           cd ${{ env.ovito_src }} && md build && cd build
-          cmake .. -DCMAKE_INSTALL_PREFIX="C:\OVITO_${{ env.ovito_version }}_Win" -DOVITO_BUILD_PROFESSIONAL=ON  -DOVITO_BUILD_SSH_CLIENT=ON  -DBoost_INCLUDE_DIR="C:/boost" -DCMAKE_EXE_LINKER_FLAGS="/SUBSYSTEM:windows /ENTRY:mainCRTStartup" -DOPENSSL_ROOT_DIR="C:\vcpkg\packages\openssl_x64-windows-release" -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\6.6.2\msvc2019_64\lib\cmake;C:\vcpkg\packages\zlib_x64-windows-release;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" -DFFMPEG_INCLUDE_DIR="C:\${{env.ffpmeg_version}}\include" -DFFMPEG_LIBRARY_DIR="C:\${{env.ffpmeg_version}}\lib" -T "v142" -A x64
+          cmake .. -DCMAKE_INSTALL_PREFIX="C:\OVITO_${{ env.ovito_version }}_Win" -DOVITO_BUILD_PROFESSIONAL=ON  -DOVITO_BUILD_SSH_CLIENT=ON  -DBoost_INCLUDE_DIR="${{steps.boost.outputs.BOOST_ROOT}}\include" 
+          -DBoost_LIBRARY_DIRS="${{steps.boost.outputs.BOOST_ROOT}}\lib" 
+          -DCMAKE_EXE_LINKER_FLAGS="/SUBSYSTEM:windows /ENTRY:mainCRTStartup" -DOPENSSL_ROOT_DIR="C:\vcpkg\packages\openssl_x64-windows-release" -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\6.6.2\msvc2019_64\lib\cmake;C:\vcpkg\packages\zlib_x64-windows-release;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" -DFFMPEG_INCLUDE_DIR="C:\${{env.ffpmeg_version}}\include" -DFFMPEG_LIBRARY_DIR="C:\${{env.ffpmeg_version}}\lib" -T "v142" -A x64
 
           cmake --build . --target INSTALL --config Release
 
