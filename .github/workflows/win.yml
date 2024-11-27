@@ -15,9 +15,19 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
+
+      - name: Install boost
+        uses: MarkusJx/install-boost@v2.4.5
+        id: install-boost
+        with:
+            boost_version: 1.73.0
+            boost_install_dir: C:\Boost
+            platform_version: 2022
+            toolset: msvc
+
     
       - name: Download dependencies
         run: |
           choco install -y qt6-base-dev
-          vcpkg install zlib boost hdf5 netcdf-c ffmpeg --triplet x64-windows
-
+          vcpkg install zlib hdf5 netcdf-c ffmpeg --triplet x64-windows
+      
