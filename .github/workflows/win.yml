@@ -27,7 +27,7 @@ jobs:
             boost_install_dir: C:\
   
       - name: Ls boost
-        shell: shell
+        shell: bash
         run: |
           ls -alt C:/boost
 
