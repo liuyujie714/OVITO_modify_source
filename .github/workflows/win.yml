@@ -26,24 +26,32 @@ jobs:
       #       # install to C:\boost
       #       boost_install_dir: C:\
 
-      - name: Install Qt6
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: '6.6.2'
-          host: 'windows'
-          target: 'desktop'
-          arch: 'win64_msvc2019_64'
-          dir: C:\Qt6
-          install-deps: 'true'
-          modules: 'qtcharts qtwebengine'
-          archives: 'qtbase qtsvg'
-          cache: 'false'
+      # - name: Install Qt6
+      #   uses: jurplel/install-qt-action@v4
+      #   with:
+      #     version: '6.6.2'
+      #     host: 'windows'
+      #     target: 'desktop'
+      #     arch: 'win64_msvc2019_64'
+      #     dir: C:\Qt6
+      #     install-deps: 'true'
+      #     modules: 'qtcharts qtwebengine'
+      #     archives: 'qtbase qtsvg'
+      #     cache: 'false'
           cache-key-prefix: 'install-qt-action'
 
-      - name: Download dependencies
-        run: |
-          vcpkg install zlib hdf5 netcdf-c ffmpeg --triplet x64-windows
+      - name: Install ffmpeg
+        uses: FedericoCarboni/setup-ffmpeg@v3
+        id: setup-ffmpeg
+        with:
+          ffmpeg-version: release
+          architecture: x64
+          linking-type: shared
+          github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
+
+      # - name: Download dependencies
+      #   run: |
+      #     vcpkg install zlib hdf5 netcdf-c ffmpeg --triplet x64-windows
 
       # - name: Build Ovito
       #   run: |
-          
