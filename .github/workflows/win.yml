@@ -58,6 +58,7 @@ jobs:
         shell: pwsh
         run: |
           dir
+          ls ${{steps.setup-ffmpeg.outputs.ffmpeg-path}}\*
           ls ${{steps.setup-ffmpeg.outputs.ffmpeg-path}}\include\*
           ls ${{steps.setup-ffmpeg.outputs.ffmpeg-path}}\lib\*
           pip install cmake==3.28
