@@ -8,6 +8,7 @@ on:
 env:
   ovito_version: "3.10.6"
   ovito_src: "ovito-v3.10.6-modified-source"
+  ffpmeg_version: "ffmpeg-7.1-full_build-shared"
 
 jobs:
   Windows:
@@ -17,53 +18,49 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Install boost
-        uses: MarkusJx/install-boost@v2.4.4
-        id: install-boost
-        with:
-            boost_version: 1.71.0
-            platform_version: 2019
-            # install to C:\boost
-            boost_install_dir: C:\
+      # - name: Install boost
+      #   uses: MarkusJx/install-boost@v2.4.4
+      #   id: install-boost
+      #   with:
+      #       boost_version: 1.71.0
+      #       platform_version: 2019
+      #       # install to C:\boost
+      #       boost_install_dir: C:\
 
-      - name: Install Qt6
-        uses: jurplel/install-qt-action@v4
-        with:
-          version: '6.6.2'
-          host: 'windows'
-          target: 'desktop'
-          arch: 'win64_msvc2019_64'
-          dir: C:\Qt6
-          install-deps: 'true'
-          modules: 'qtcharts qtwebengine'
-          archives: 'qtbase qtsvg'
-          cache: 'false'
-          cache-key-prefix: 'install-qt-action'
+      # - name: Install Qt6
+      #   uses: jurplel/install-qt-action@v4
+      #   with:
+      #     version: '6.6.2'
+      #     host: 'windows'
+      #     target: 'desktop'
+      #     arch: 'win64_msvc2019_64'
+      #     dir: C:\Qt6
+      #     install-deps: 'true'
+      #     modules: 'qtcharts qtwebengine'
+      #     archives: 'qtbase qtsvg'
+      #     cache: 'false'
+      #     cache-key-prefix: 'install-qt-action'
 
       - name: Install ffmpeg
-        uses: FedericoCarboni/setup-ffmpeg@v3.1
-        id: setup-ffmpeg
-        with:
-          ffmpeg-version: release
-          architecture: x64
-          linking-type: shared
-          github-token: ${{ github.server_url == 'https://github.com' && github.token || '' }}
-
-      - name: Download dependencies
         run: |
-          echo ${{steps.setup-ffmpeg.outputs.ffmpeg-path}}
-          vcpkg install zlib hdf5 netcdf-c libssh --triplet x64-windows-release
+          choco install p7zip
+          wget https://www.gyan.dev/ffmpeg/builds/packages/${{env.ffpmeg_version}}.7z
+          7z x ${{env.ffpmeg_version}}.7z
+          Move-Item -Path ${{env.ffpmeg_version}} -Destination C:\
 
-      - name: Build Ovito
-        shell: pwsh
-        run: |
-          dir
-          ls ${{steps.setup-ffmpeg.outputs.ffmpeg-path}}\*
-          ls ${{steps.setup-ffmpeg.outputs.ffmpeg-path}}\include\*
-          ls ${{steps.setup-ffmpeg.outputs.ffmpeg-path}}\lib\*
-          pip install cmake==3.28
-          cd ${{ env.ovito_src }} && md build && cd build
-          cmake .. -DCMAKE_INSTALL_PREFIX="C:\OVITO_${{ env.ovito_version }}_Win" -DOVITO_BUILD_PROFESSIONAL=ON  -DOVITO_BUILD_SSH_CLIENT=ON  -DBoost_INCLUDE_DIR="C:/boost" -DCMAKE_EXE_LINKER_FLAGS="/SUBSYSTEM:windows /ENTRY:mainCRTStartup" -DOPENSSL_ROOT_DIR="C:\vcpkg\packages\openssl_x64-windows-release" -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\6.6.2\msvc2019_64\lib\cmake;C:\vcpkg\packages\zlib_x64-windows-release;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" -DFFMPEG_INCLUDE_DIR="${{steps.setup-ffmpeg.outputs.ffmpeg-path}}\include" -DFFMPEG_LIBRARY_DIR="${{steps.setup-ffmpeg.outputs.ffmpeg-path}}\lib" -T "v142" -A x64
+          dir C:\*
 
-          cmake --build . --target INSTALL --config Release
+      # - name: Download dependencies
+      #   run: |
+      #     vcpkg install zlib hdf5 netcdf-c libssh --triplet x64-windows-release
+
+      # - name: Build Ovito
+      #   shell: pwsh
+      #   run: |
+      #     dir
+      #     pip install cmake==3.28
+      #     cd ${{ env.ovito_src }} && md build && cd build
+      #     cmake .. -DCMAKE_INSTALL_PREFIX="C:\OVITO_${{ env.ovito_version }}_Win" -DOVITO_BUILD_PROFESSIONAL=ON  -DOVITO_BUILD_SSH_CLIENT=ON  -DBoost_INCLUDE_DIR="C:/boost" -DCMAKE_EXE_LINKER_FLAGS="/SUBSYSTEM:windows /ENTRY:mainCRTStartup" -DOPENSSL_ROOT_DIR="C:\vcpkg\packages\openssl_x64-windows-release" -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\6.6.2\msvc2019_64\lib\cmake;C:\vcpkg\packages\zlib_x64-windows-release;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" -DFFMPEG_INCLUDE_DIR="C:\${{env.ffpmeg_version}}\include" -DFFMPEG_LIBRARY_DIR="C:\${{env.ffpmeg_version}}\lib" -T "v142" -A x64
+
+      #     cmake --build . --target INSTALL --config Release
 
