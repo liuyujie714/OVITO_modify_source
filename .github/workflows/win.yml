@@ -41,17 +41,17 @@ jobs:
           cache: 'false'
           cache-key-prefix: 'install-qt-action'
 
-      # - name: Install ffmpeg
-      #   run: |
-      #     choco install p7zip wget
-      #     wget https://www.gyan.dev/ffmpeg/builds/packages/${{env.ffpmeg_version}}.7z
-      #     7z x ${{env.ffpmeg_version}}.7z
-      #     Move-Item -Path ${{env.ffpmeg_version}} -Destination C:\
-      #     Remove-Item -Path ${{env.ffpmeg_version}}.7z
+      - name: Install ffmpeg
+        run: |
+          choco install p7zip wget
+          wget https://www.gyan.dev/ffmpeg/builds/packages/${{env.ffpmeg_version}}.7z
+          7z x ${{env.ffpmeg_version}}.7z
+          Move-Item -Path ${{env.ffpmeg_version}} -Destination C:\
+          Remove-Item -Path ${{env.ffpmeg_version}}.7z
 
-      # - name: Download dependencies
-      #   run: |
-      #     vcpkg install zlib hdf5 netcdf-c libssh --triplet x64-windows-release
+      - name: Download dependencies
+        run: |
+          vcpkg install zlib hdf5 netcdf-c libssh --triplet x64-windows-release
 
       - name: Build Ovito
         shell: pwsh
