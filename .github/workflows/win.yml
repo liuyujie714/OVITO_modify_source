@@ -50,7 +50,7 @@ jobs:
 
       - name: Download dependencies
         run: |
-          vcpkg install zlib hdf5 netcdf-c --triplet x64-windows
+          vcpkg install zlib hdf5 netcdf-c --triplet x64-windows-release
 
       # - name: Build Ovito
       #   run: |
