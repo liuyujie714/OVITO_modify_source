@@ -87,7 +87,7 @@ MACRO(OVITO_INSTALL_SHARED_LIB shared_lib)
         STRING(REPLACE ${shared_lib_ext} "" lib_base_name "${_shared_lib}")
 
         # Find all files/symlinks in the same directory having the same base name.
-        FILE(GLOB lib_versions LIST_DIRECTORIES FALSE "${_shared_lib}" "${lib_base_name}.*${CMAKE_SHARED_LIBRARY_SUFFIX}" "${lib_base_name}${CMAKE_SHARED_LIBRARY_SUFFIX}.*")
+        FILE(GLOB lib_versions LIST_DIRECTORIES FALSE "${_shared_lib}" "${lib_base_name}.*${CMAKE_SHARED_LIBRARY_SUFFIX}" "${lib_base_name}${CMAKE_SHARED_LIBRARY_SUFFIX}.*" "${lib_base_name}1${CMAKE_SHARED_LIBRARY_SUFFIX}")
         IF(NOT lib_versions)
             IF(${ARG_OPTIONAL})
                 MESSAGE(STATUS "Did not find any library files matching the file path ${_shared_lib} --> skipping installation because this lib is optional")
