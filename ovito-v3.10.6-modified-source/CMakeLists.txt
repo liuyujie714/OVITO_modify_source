@@ -320,4 +320,4 @@ IF(OVITO_CMAKE_FILE_INJECTION_PROJECT)
 ENDIF()
 
 # Generate the user manual.
-ADD_SUBDIRECTORY(doc/manual)
+#ADD_SUBDIRECTORY(doc/manual)
