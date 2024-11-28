@@ -39,7 +39,7 @@ void TprImporter::FrameLoader::loadFile()
 		// set box
 		std::vector<float> box{ tpr->get_xvf("box") };
 		// box nm to angstrom
-		std::transform(box.begin(), box.end(), box.begin(), [](float &val) {return val * factor; });
+		std::transform(box.begin(), box.end(), box.begin(), [factor](float &val) {return val * factor; });
 		AffineTransformation cell = AffineTransformation::Identity();
 		// need check
 		cell(0, 0) = box[0]; cell(0, 1) = box[3]; cell(0, 2) = box[6];
