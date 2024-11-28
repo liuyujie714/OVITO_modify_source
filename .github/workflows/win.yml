@@ -146,5 +146,5 @@ jobs:
           OUTPUT_TAR: OVITO_${{ env.ovito_version }}_Win.tar.gz
         run: |
           ls -alt
-          tar -czvf ${{env.OUTPUT_TAR}} *.dll *.exe doc 
+          tar -czvf ${{env.OUTPUT_TAR}} *.dll *.exe doc plugins
           github-release upload --tag ${{ env.RELEASE_TAG }} --replace --name ${{env.OUTPUT_TAR}} --file ${{env.OUTPUT_TAR}}
