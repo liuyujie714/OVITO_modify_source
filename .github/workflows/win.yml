@@ -68,17 +68,17 @@ jobs:
           BOOST_ROOT: ${{ steps.boost.outputs.BOOST_ROOT }}
         run: |
           cd ${{ env.ovito_src }} && md build && cd build
-          #cmake .. -DCMAKE_INSTALL_PREFIX="C:\OVITO_${{ env.ovito_version }}_Win" -DOVITO_BUILD_PROFESSIONAL=ON  -DOVITO_BUILD_SSH_CLIENT=ON  -DBoost_INCLUDE_DIR="${{steps.boost.outputs.BOOST_ROOT}}\include" -DBoost_LIBRARY_DIR="${{steps.boost.outputs.BOOST_ROOT}}\lib" -DCMAKE_EXE_LINKER_FLAGS="/SUBSYSTEM:windows /ENTRY:mainCRTStartup" -DOPENSSL_ROOT_DIR="C:\vcpkg\packages\openssl_x64-windows-release" -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\6.6.2\msvc2019_64\lib\cmake;C:\vcpkg\packages\zlib_x64-windows-release;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" -DFFMPEG_INCLUDE_DIR="C:\${{env.ffpmeg_version}}\include" -DFFMPEG_LIBRARY_DIR="C:\${{env.ffpmeg_version}}\lib" -T "v142" -A x64
-          #cmake --build . --target INSTALL --config Release -- "-maxCpuCount" "-p:CL_MPCount=4"
-          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="C:\OVITO_${{ env.ovito_version }}_Win" -DOVITO_BUILD_PROFESSIONAL=ON  -DOVITO_BUILD_SSH_CLIENT=ON  -DBoost_INCLUDE_DIR="${{steps.boost.outputs.BOOST_ROOT}}\include" -DBoost_LIBRARY_DIR="${{steps.boost.outputs.BOOST_ROOT}}\lib" -DCMAKE_EXE_LINKER_FLAGS="/SUBSYSTEM:windows /ENTRY:mainCRTStartup" -DOPENSSL_ROOT_DIR="C:\vcpkg\packages\openssl_x64-windows-release" -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\6.6.2\msvc2019_64\lib\cmake;C:\vcpkg\packages\zlib_x64-windows-release;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" -DFFMPEG_INCLUDE_DIR="C:\${{env.ffpmeg_version}}\include" -DFFMPEG_LIBRARY_DIR="C:\${{env.ffpmeg_version}}\lib"
-          sed -i 's/-MD/-MT/g' build.ninja
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="C:\OVITO_${{ env.ovito_version }}_Win" -DOVITO_BUILD_PROFESSIONAL=ON  -DOVITO_BUILD_SSH_CLIENT=ON  -DBoost_INCLUDE_DIR="${{steps.boost.outputs.BOOST_ROOT}}\include" -DBoost_LIBRARY_DIR="${{steps.boost.outputs.BOOST_ROOT}}\lib" -DCMAKE_EXE_LINKER_FLAGS="/SUBSYSTEM:windows /ENTRY:mainCRTStartup" -DOVITO_BUILD_MONOLITHIC=ON  -DOPENSSL_ROOT_DIR="C:\vcpkg\packages\openssl_x64-windows-release" -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\6.6.2\msvc2019_64\lib\cmake;C:\vcpkg\packages\zlib_x64-windows-release;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" -DFFMPEG_INCLUDE_DIR="C:\${{env.ffpmeg_version}}\include" -DFFMPEG_LIBRARY_DIR="C:\${{env.ffpmeg_version}}\lib"
           ninja install -j4 || ninja install -j1
+          
+          cd ..
              
       - name: Copy plugins and dll
         env:
           QT_PATH_: C:\Qt6\Qt\6.6.2\msvc2019_64
         run: |
           Copy-Item -Path ${{env.QT_PATH_}}\plugins   -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Recurse -Force
+          Copy-Item -Path ${{env.ovito_src}}\doc      -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Recurse -Force
           Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6Core.dll          -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
           Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6Gui.dll           -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
           Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6Network.dll       -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
@@ -89,6 +89,7 @@ jobs:
           Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6Widgets.dll       -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
           Copy-Item -Path C:\vcpkg\packages\netcdf-c_x64-windows-release\bin\netcdf.dll   -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
           Copy-Item -Path C:\${{env.ffpmeg_version}}\bin\avdevice-61.dll   -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path C:\${{env.ffpmeg_version}}\bin\postproc-58.dll   -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
           Copy-Item -Path C:\vcpkg\packages\curl_x64-windows-release\bin\libcurl.dll   -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
           
       - name: Upload Ovito
@@ -156,5 +157,5 @@ jobs:
           OUTPUT_TAR: OVITO_${{ env.ovito_version }}_Win.tar.gz
         run: |
           ls -alt
-          tar -czvf ${{env.OUTPUT_TAR}} *.dll *.exe plugins
+          tar -czvf ${{env.OUTPUT_TAR}} *.dll *.exe plugins doc
           github-release upload --tag ${{ env.RELEASE_TAG }} --replace --name ${{env.OUTPUT_TAR}} --file ${{env.OUTPUT_TAR}}
