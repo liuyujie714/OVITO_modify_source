@@ -43,7 +43,8 @@ jobs:
       - name: Install ffmpeg
         run: |
           choco install p7zip wget
-          wget https://www.gyan.dev/ffmpeg/builds/packages/${{env.ffpmeg_version}}.7z
+          #wget https://www.gyan.dev/ffmpeg/builds/packages/${{env.ffpmeg_version}}.7z
+          wget https://github.com/GyanD/codexffmpeg/releases/download/7.1/${{env.ffpmeg_version}}.7z
           7z x ${{env.ffpmeg_version}}.7z
           Copy-Item -Path ${{env.ffpmeg_version}}\bin\*.dll ${{env.ffpmeg_version}}\lib\
           Move-Item -Path ${{env.ffpmeg_version}} -Destination C:\
