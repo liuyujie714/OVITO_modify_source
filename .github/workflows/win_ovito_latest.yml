@@ -23,8 +23,8 @@ jobs:
             tar -xf ovito-v${{env.ovito_version}}.tar.gz
 
             # download win64 for manual
-            curl -O https://www.ovito.org/download/master/ovito-basic-v${{env.ovito_version}}-win64.zip
-            unzip ovito-basic-v${{env.ovito_version}}-win64.zip -d win64_temp
+            curl -O https://www.ovito.org/download/master/ovito-basic-${{env.ovito_version}}-win64.zip
+            unzip ovito-basic-${{env.ovito_version}}-win64.zip -d win64_temp
 
       - name: Install boost
         uses: MarkusJx/install-boost@v2.4.4
