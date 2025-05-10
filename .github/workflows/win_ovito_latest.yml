@@ -42,10 +42,6 @@ jobs:
             static: 1
             static-runtime: 1
 
-      - name: list
-        run: |
-          dir D:\a\OVITO_3.10.6_modify_source\boost\include/boost/
-
       - name: Install Qt6
         uses: jurplel/install-qt-action@v4
         with:
@@ -74,6 +70,7 @@ jobs:
         run: |
           choco install ninja
           vcpkg install zlib hdf5 netcdf-c libssh --triplet x64-windows-release
+          pip install cmake==3.28
           ls C:/vcpkg/packages/zlib_x64-windows-release/bin
 
       - name: Configure build for amd64
