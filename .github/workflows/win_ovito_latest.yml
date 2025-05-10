@@ -16,16 +16,14 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-
-      - name: List zlib
-        run: |
-          vcpkg install zlib --triplet x64-windows-release
-          ls C:/vcpkg/packages/zlib_x64-windows-release/bin
-     
+        
       - name: Download Ovito source code
+        shell: bash
         run: |
             curl -O https://gitlab.com/stuko/ovito/-/archive/v${{env.ovito_version}}/ovito-v${{env.ovito_version}}.tar.gz
             tar -xf ovito-v${{env.ovito_version}}.tar.gz
+            #fix zlib1 name
+            sed -i 's/zlib\.dll/zlib1.dll/g' ovito-v${{env.ovito_version}}/src/ovito/core/CMakeLists.txt
 
             # download win64 for manual
             curl -O https://www.ovito.org/download/master/ovito-basic-${{env.ovito_version}}-win64.zip
@@ -111,6 +109,7 @@ jobs:
 
       - name: test Ovito
         run: |
+          dumpbin /dependents C:\OVITO_${{ env.ovito_version }}_Win\ovito.exe
           C:\OVITO_${{ env.ovito_version }}_Win\ovito.exe --nogui
           
       - name: Upload Ovito
