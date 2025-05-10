@@ -42,6 +42,10 @@ jobs:
             static: 1
             static-runtime: 1
 
+      - name: list
+        run: |
+          dir D:\a\OVITO_3.10.6_modify_source\boost\include/boost/
+
       - name: Install Qt6
         uses: jurplel/install-qt-action@v4
         with:
