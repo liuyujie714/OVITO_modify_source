@@ -74,8 +74,6 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: amd64
-          # must use v142 to avoid compile errors for ninja about calc_verletbuf.cpp code
-          toolset: 14.29
 
       - name: Build Ovito
         shell: pwsh
