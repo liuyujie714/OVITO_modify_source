@@ -38,6 +38,10 @@ jobs:
             version: 1.78.0
             platform: x64
             configuration: Release
+            toolset: msvc
+            static: 1
+            static-runtime: 1
+            directory: C:\
 
       - name: Install Qt6
         uses: jurplel/install-qt-action@v4
