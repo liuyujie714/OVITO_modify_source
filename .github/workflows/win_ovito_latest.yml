@@ -41,7 +41,6 @@ jobs:
             toolset: msvc
             static: 1
             static-runtime: 1
-            directory: C:\
 
       - name: Install Qt6
         uses: jurplel/install-qt-action@v4
