@@ -17,6 +17,15 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
+      - name: Download Ovito source code
+        run: |
+            curl -O https://gitlab.com/stuko/ovito/-/archive/v${{env.ovito_version}}/ovito-v${{env.ovito_version}}.tar.gz
+            tar -xf ovito-v${{env.ovito_version}}.tar.gz
+
+            # download win64 for manual
+            curl -O https://www.ovito.org/download/master/ovito-basic-v${{env.ovito_version}}-win64.zip
+            unzip ovito-basic-v${{env.ovito_version}}-win64.zip -d win64_temp
+
       - name: Install boost
         uses: MarkusJx/install-boost@v2.4.4
         id: boost
@@ -61,16 +70,6 @@ jobs:
           arch: amd64
           # must use v142 to avoid compile errors for ninja about calc_verletbuf.cpp code
           toolset: 14.29
-
-      - name: Download Ovito source code
-        run: |
-            curl -O https://gitlab.com/stuko/ovito/-/archive/v${{env.ovito_version}}/ovito-v${{env.ovito_version}}.tar.gz
-            tar -xf ovito-v${{env.ovito_version}}.tar.gz
-
-            # download win64 for manual
-            curl -O https://www.ovito.org/download/master/ovito-basic-v${{env.ovito_version}}-win64.zip
-            unzip ovito-basic-v${{env.ovito_version}}-win64.zip -d win64_temp
-
 
       - name: Build Ovito
         shell: pwsh
@@ -119,7 +118,7 @@ jobs:
   # refer to https://github.com/endless-sky/endless-sky/blob/master/.github/workflows/cd.yaml
   Release:
     needs: [Windows]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     env:
         RELEASE_COMMAND: release
