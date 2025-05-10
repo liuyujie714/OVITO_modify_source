@@ -32,7 +32,7 @@ jobs:
             rm -rf ovito-basic-${{env.ovito_version}}-win64.zip
 
       - name: Install boost
-        uses: egor-tensin/build-boost@v1.4
+        uses: mickem/build-boost@v1
         id: boost
         with:
             version: 1.78.0
