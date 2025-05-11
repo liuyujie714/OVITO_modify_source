@@ -188,7 +188,7 @@ jobs:
 
       - name: Package Windows artifact to release
         env:
-          OUTPUT_TAR: OVITO_${{ env.ovito_version }}_Basic_WinX64.tar.gz
+          OUTPUT_TAR: OVITO_Basic_${{ env.ovito_version }}_WinX64.tar.gz
         run: |
           ls -alt
           tar -czvf ${{env.OUTPUT_TAR}} *.dll *.exe plugins doc
