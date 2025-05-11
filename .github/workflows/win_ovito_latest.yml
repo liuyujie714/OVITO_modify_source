@@ -72,7 +72,7 @@ jobs:
         run: |
           vcpkg install zlib hdf5 netcdf-c libssh --triplet x64-windows-release
           # use static zstd library
-          vcpkg install zstd:x64-windows-static --binarysource="clear;x-gha,readwrite"
+          vcpkg install zstd:x64-windows-static
           ls C:/vcpkg/packages/zlib_x64-windows-release/bin
 
       - name: Configure build for amd64
