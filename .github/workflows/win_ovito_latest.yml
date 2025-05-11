@@ -97,7 +97,7 @@ jobs:
           -DCMAKE_EXE_LINKER_FLAGS="/SUBSYSTEM:windows /ENTRY:mainCRTStartup" `
           -DOVITO_BUILD_MONOLITHIC=ON  `
           -DOPENSSL_ROOT_DIR="C:\vcpkg\packages\openssl_x64-windows-release" `
-          -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\6.6.2\msvc2019_64\lib\cmake;C:\vcpkg\packages\zlib_x64-windows-release;C:\vcpkg\packages\zstd_x64-windows-release;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" `
+          -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\6.6.2\msvc2019_64\lib\cmake;C:\vcpkg\packages\zlib_x64-windows-release;C:\vcpkg\packages\flint_x64-windows-static;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" `
           -DFFMPEG_INCLUDE_DIR="C:\${{env.ffpmeg_version}}\include" `
           -DFFMPEG_LIBRARY_DIR="C:\${{env.ffpmeg_version}}\lib"
           ninja install -j4 || ninja install -j1
