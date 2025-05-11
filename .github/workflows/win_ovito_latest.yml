@@ -21,10 +21,14 @@ jobs:
         shell: bash
         run: |
             rm -rf "C:/Android/android-sdk"
-            curl -O https://gitlab.com/stuko/ovito/-/archive/v${{env.ovito_version}}/ovito-v${{env.ovito_version}}.tar.gz
-            tar -xf ovito-v${{env.ovito_version}}.tar.gz
+            #curl -O https://gitlab.com/stuko/ovito/-/archive/v${{env.ovito_version}}/ovito-v${{env.ovito_version}}.tar.gz
+            #tar -xf ovito-v${{env.ovito_version}}.tar.gz
+
+            # use git for external zstd, get ovito folder
+            git clone --branch dev${{env.ovito_version}} --recursive https://gitlab.com/stuko/ovito.git
+            
             #fix zlib1 name
-            sed -i 's/zlib\.dll/zlib1.dll/g' ovito-v${{env.ovito_version}}/src/ovito/core/CMakeLists.txt
+            sed -i 's/zlib\.dll/zlib1.dll/g' ovito/src/ovito/core/CMakeLists.txt
 
             # download win64 for manual
             curl -O https://www.ovito.org/download/master/ovito-basic-${{env.ovito_version}}-win64.zip
@@ -80,7 +84,7 @@ jobs:
         env:
           BOOST_ROOT: ${{ steps.boost.outputs.BOOST_ROOT }}
         run: |
-          cd ovito-v${{env.ovito_version}} && md build && cd build
+          cd ovito && md build && cd build
           cmake .. `
           -G Ninja `
           -DCMAKE_BUILD_TYPE=Release `
