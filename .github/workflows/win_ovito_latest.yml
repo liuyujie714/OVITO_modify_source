@@ -25,7 +25,7 @@ jobs:
             #tar -xf ovito-v${{env.ovito_version}}.tar.gz
 
             # m-ovito
-            git clone https://github.com/liuyujie714/m-ovito.git
+            git clone git@github.com:liuyujie714/m-ovito.git
             mv m-ovito ovito-v${{env.ovito_version}}
             
 
