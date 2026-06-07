@@ -21,8 +21,13 @@ jobs:
         shell: bash
         run: |
             rm -rf "C:/Android/android-sdk"
-            curl -O https://gitlab.com/stuko/ovito/-/archive/v${{env.ovito_version}}/ovito-v${{env.ovito_version}}.tar.gz
-            tar -xf ovito-v${{env.ovito_version}}.tar.gz
+            #curl -O https://gitlab.com/stuko/ovito/-/archive/v${{env.ovito_version}}/ovito-v${{env.ovito_version}}.tar.gz
+            #tar -xf ovito-v${{env.ovito_version}}.tar.gz
+
+            # m-ovito
+            git clone https://github.com/liuyujie714/m-ovito.git
+            mv m-ovito ovito-v${{env.ovito_version}}
+            
 
             ## use git for external zstd, get ovito folder
             #git clone --branch dev${{env.ovito_version}} --recursive https://gitlab.com/stuko/ovito.git
