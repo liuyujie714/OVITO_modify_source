@@ -95,6 +95,7 @@ jobs:
           BOOST_ROOT: ${{ steps.boost.outputs.BOOST_ROOT }}
         run: |
           cd ovito-v${{env.ovito_version}} && md build && cd build
+          $pybind11_dir = python -c "import pybind11; print(pybind11.get_cmake_dir().replace('\\', '/'))"
           cmake .. `
           -G Ninja `
           -DCMAKE_BUILD_TYPE=Release `
@@ -102,6 +103,7 @@ jobs:
           -DOVITO_BUILD_PROFESSIONAL=ON  `
           -DOVITO_BUILD_SSH_CLIENT=ON  `
           -DOVITO_BUILD_PLUGIN_PYSCRIPT=ON `
+          -Dpybind11_DIR="$pybind11_dir" `
           -DHDF5_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5.lib" `
           -DHDF5_HL_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5_hl.lib" `
           -DHDF5_INCLUDE_DIR="C:/vcpkg/packages/hdf5_x64-windows-release/include" `
