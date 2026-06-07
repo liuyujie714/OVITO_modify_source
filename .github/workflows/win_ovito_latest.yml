@@ -6,7 +6,7 @@ on:
       - master
 
 env:
-  ovito_version: "3.12.3"
+  ovito_version: "3.15.3"
   ffpmeg_version: "ffmpeg-7.1-full_build-shared"
 
 jobs:
