@@ -78,6 +78,7 @@ jobs:
 
       - name: Download dependencies
         run: |
+          pip install pybind11
           vcpkg install zlib hdf5 netcdf-c libssh --triplet x64-windows-release
           ls C:/vcpkg/packages
           ls C:/vcpkg/packages/zlib_x64-windows-release/bin
