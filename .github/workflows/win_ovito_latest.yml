@@ -32,7 +32,7 @@ jobs:
             mv m-ovito ovito-v${{env.ovito_version}}
             
             #fix zlib1 name
-            sed -i 's/zlib\.dll/zlib1.dll/g' ovito-v${{env.ovito_version}}/src/ovito/core/CMakeLists.txt
+            sed -i 's/zlib\.dll/z.dll/g' ovito-v${{env.ovito_version}}/src/ovito/core/CMakeLists.txt
 
             # download win64 for manual
             curl -O https://www.ovito.org/download/master/ovito-basic-${{env.ovito_version}}-win64.zip
