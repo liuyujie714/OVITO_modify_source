@@ -6,7 +6,7 @@ on:
       - master
 
 env:
-  ovito_version: "3.15.3"
+  ovito_version: "3.15.0"
   ffpmeg_version: "ffmpeg-7.1-full_build-shared"
 
 jobs:
@@ -27,8 +27,12 @@ jobs:
             ## use git for external zstd, get ovito folder
             #git clone --branch dev${{env.ovito_version}} --recursive https://gitlab.com/stuko/ovito.git
 
-            # m-ovito
+            # m-ovito to 3.15.0
             git clone --recursive https://github.com/blualg/m-ovito.git
+            cd m-ovito
+            git checkout 6c9b8e0
+            git submodule update --init --recursive
+            cd ..
             mv m-ovito ovito-v${{env.ovito_version}}
             
             #fix zlib1 name
@@ -95,6 +99,7 @@ jobs:
           -DCMAKE_INSTALL_PREFIX="C:\OVITO_${{ env.ovito_version }}_Win" `
           -DOVITO_BUILD_PROFESSIONAL=ON  `
           -DOVITO_BUILD_SSH_CLIENT=ON  `
+          -DOVITO_BUILD_PLUGIN_PYSCRIPT=ON `
           -DHDF5_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5.lib" `
           -DHDF5_HL_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5_hl.lib" `
           -DHDF5_INCLUDE_DIR="C:/vcpkg/packages/hdf5_x64-windows-release/include" `
