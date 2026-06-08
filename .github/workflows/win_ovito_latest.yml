@@ -39,7 +39,7 @@ jobs:
             cd m-ovito
             git checkout 0712553
             git submodule update --init --recursive
-            sed -i '98,280d' src/main/CMakeLists.txt
+            #sed -i '98,280d' src/main/CMakeLists.txt
             cd ..
             mv m-ovito ovito-v${{env.ovito_version}}
             
