@@ -8,6 +8,7 @@ on:
 env:
   ovito_version: "3.15.0"
   ffpmeg_version: "ffmpeg-7.1-full_build-shared"
+  qt_version: 6.8.7
 
 jobs:
   Windows:
@@ -54,9 +55,9 @@ jobs:
             boost_install_dir: C:\
 
       - name: Install Qt6
-        uses: jurplel/install-qt-action@v4
+        uses: jurplel/install-qt-action@v4.3.1
         with:
-          version: '6.10.3'
+          version: ${{env.qt_version}}
           host: 'windows'
           target: 'desktop'
           arch: 'win64_msvc2019_64'
@@ -112,14 +113,14 @@ jobs:
           -DCMAKE_EXE_LINKER_FLAGS="/SUBSYSTEM:windows /ENTRY:mainCRTStartup" `
           -DOVITO_BUILD_MONOLITHIC=ON  `
           -DOPENSSL_ROOT_DIR="C:\vcpkg\packages\openssl_x64-windows-release" `
-          -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\6.10.3\msvc2019_64\lib\cmake;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" `
+          -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\${{env.qt_version}}\msvc2019_64\lib\cmake;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" `
           -DFFMPEG_INCLUDE_DIR="C:\${{env.ffpmeg_version}}\include" `
           -DFFMPEG_LIBRARY_DIR="C:\${{env.ffpmeg_version}}\lib"
           ninja install -j4 || ninja install -j1
              
       - name: Copy plugins and dll
         env:
-          QT_PATH_: C:\Qt6\Qt\6.10.3\msvc2019_64
+          QT_PATH_: C:\Qt6\Qt\${{env.qt_version}}\msvc2019_64
         run: |
           Copy-Item -Path ${{env.QT_PATH_}}\plugins                  -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Recurse -Force
           Copy-Item -Path win64_temp\doc                             -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Recurse -Force
