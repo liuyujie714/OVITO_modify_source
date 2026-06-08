@@ -38,7 +38,7 @@ jobs:
             cd m-ovito
             git checkout main
             git submodule update --init --recursive
-            sed -i.bak '/PROJECT(Ovito)/a find_package(pybind11 CONFIG REQUIRED)' CMakeLists.txt
+            sed -i.bak '/PROJECT(Ovito)/a find_package(11 CONFIG REQUIRED)' CMakeLists.txt
             sed -i '98,280d' src/main/CMakeLists.txt
             cd ..
             mv m-ovito ovito-v${{env.ovito_version}}
@@ -86,7 +86,6 @@ jobs:
 
       - name: Download dependencies
         run: |
-          pip install pybind11
           vcpkg install hdf5 netcdf-c libssh --triplet x64-windows-release
           ls C:/vcpkg/packages
           ls C:/vcpkg/packages/hdf5_x64-windows-release/bin
@@ -102,7 +101,7 @@ jobs:
           BOOST_ROOT: ${{ steps.boost.outputs.BOOST_ROOT }}
         run: |
           cd ovito-v${{env.ovito_version}} && md build && cd build
-          $pybind11_dir = python -c "import pybind11; print(pybind11.get_cmake_dir().replace('\\', '/'))"
+          $pybind11_dir = "$GITHUB_WORKSPACE/ovito-v${{env.ovito_version}}/src/3rdparty/pybind11"
           cmake .. `
           -G Ninja `
           -DCMAKE_BUILD_TYPE=Release `
