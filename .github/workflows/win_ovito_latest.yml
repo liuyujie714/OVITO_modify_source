@@ -49,7 +49,7 @@ jobs:
         id: boost
         with:
             boost_version: 1.88.0
-            platform_version: 2019
+            platform_version: 2022
             # install to C:\boost
             boost_install_dir: C:\
 
