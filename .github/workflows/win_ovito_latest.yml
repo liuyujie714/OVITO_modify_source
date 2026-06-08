@@ -45,7 +45,7 @@ jobs:
             rm -rf ovito-basic-${{env.ovito_version}}-win64.zip
 
       - name: Install boost
-        uses: MarkusJx/install-boost@v2.4.4
+        uses: MarkusJx/install-boost@v2.6.0
         id: boost
         with:
             boost_version: 1.88.0
