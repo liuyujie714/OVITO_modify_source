@@ -34,10 +34,10 @@ jobs:
             ## use git for external zstd, get ovito folder
             #git clone --branch dev${{env.ovito_version}} --recursive https://gitlab.com/stuko/ovito.git
 
-            # m-ovito to 3.15.0
+            # m-ovito to 3.0.0
             git clone --recursive https://github.com/blualg/m-ovito.git
             cd m-ovito
-            git checkout main
+            git checkout 0712553
             git submodule update --init --recursive
             sed -i '98,280d' src/main/CMakeLists.txt
             cd ..
