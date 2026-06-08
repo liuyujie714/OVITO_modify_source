@@ -38,7 +38,6 @@ jobs:
             cd m-ovito
             git checkout main
             git submodule update --init --recursive
-            sed -i.bak '/PROJECT(Ovito)/a find_package(11 CONFIG REQUIRED)' CMakeLists.txt
             sed -i '98,280d' src/main/CMakeLists.txt
             cd ..
             mv m-ovito ovito-v${{env.ovito_version}}
