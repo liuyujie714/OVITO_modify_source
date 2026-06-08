@@ -6,7 +6,7 @@ on:
       - master
 
 env:
-  ovito_version: "3.15.0"
+  ovito_version: "3.15.3"
   ffpmeg_version: "ffmpeg-7.1-full_build-shared"
   qt_version: 6.8.7
 
@@ -31,7 +31,7 @@ jobs:
             # m-ovito to 3.15.0
             git clone --recursive https://github.com/blualg/m-ovito.git
             cd m-ovito
-            git checkout 502f45b
+            git checkout 6088e4c
             git submodule update --init --recursive
             sed -i.bak '/PROJECT(Ovito)/a find_package(pybind11 CONFIG REQUIRED)' CMakeLists.txt
             cd ..
