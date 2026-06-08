@@ -9,6 +9,7 @@ env:
   ovito_version: "3.15.3"
   ffpmeg_version: "ffmpeg-7.1-full_build-shared"
   qt_version: 6.8.3
+  PYTHONHOME: "C:/hostedtoolcache/windows/Python/3.14.5/x64" 
 
 jobs:
   Windows:
@@ -21,7 +22,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12.10' 
+          python-version: '3.14.5' 
         
       - name: Download Ovito source code
         shell: bash
@@ -108,8 +109,6 @@ jobs:
           -DOVITO_BUILD_PROFESSIONAL=ON  `
           -DOVITO_BUILD_SSH_CLIENT=ON  `
           -DOVITO_BUILD_PLUGIN_PYSCRIPT=ON `
-          -DOVITO_ACTIVE_PYTHON_RUNTIME_DLL=ON `
-          -DOVITO_ACTIVE_PYTHON3_DLL=ON `
           -Dpybind11_DIR="$pybind11_dir" `
           -DHDF5_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5.lib" `
           -DHDF5_HL_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5_hl.lib" `
