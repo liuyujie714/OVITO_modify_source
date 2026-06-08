@@ -83,6 +83,7 @@ jobs:
           vcpkg install zlib hdf5 netcdf-c libssh --triplet x64-windows-release
           ls C:/vcpkg/packages
           ls C:/vcpkg/packages/zlib_x64-windows-release/bin
+          ls C:/vcpkg/packages/hdf5_x64-windows-release/bin
 
       - name: Configure build for amd64
         uses: ilammy/msvc-dev-cmd@v1
