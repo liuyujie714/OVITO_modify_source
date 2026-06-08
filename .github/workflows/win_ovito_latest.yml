@@ -108,6 +108,8 @@ jobs:
           -DOVITO_BUILD_PROFESSIONAL=ON  `
           -DOVITO_BUILD_SSH_CLIENT=ON  `
           -DOVITO_BUILD_PLUGIN_PYSCRIPT=ON `
+          -DOVITO_ACTIVE_PYTHON_RUNTIME_DLL=ON `
+          -DOVITO_ACTIVE_PYTHON3_DLL=ON `
           -Dpybind11_DIR="$pybind11_dir" `
           -DHDF5_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5.lib" `
           -DHDF5_HL_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5_hl.lib" `
