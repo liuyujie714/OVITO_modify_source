@@ -170,6 +170,7 @@ jobs:
           Copy-Item -Path "C:\vcpkg\packages\hdf5_x64-windows-release\bin\hdf5_hl.dll"         -Destination C:\OVITO_${{ env.ovito_version }}_Win -Force
           Copy-Item -Path "C:\vcpkg\packages\hdf5_x64-windows-release\bin\hdf5.dll"            -Destination C:\OVITO_${{ env.ovito_version }}_Win -Force
           Copy-Item -Path "C:\vcpkg\packages\tinyxml2_x64-windows-release\bin\tinyxml2.dll"    -Destination C:\OVITO_${{ env.ovito_version }}_Win -Force
+          Copy-Item -Path "C:\vcpkg\packages\libaec_x64-windows-release\bin\szip.dll"          -Destination C:\OVITO_${{ env.ovito_version }}_Win -Force
       
       - name: test Ovito
         run: |
