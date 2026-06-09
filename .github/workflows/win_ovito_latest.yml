@@ -100,7 +100,7 @@ jobs:
       - name: Download dependencies
         run: |
           pip install numpy scipy
-          vcpkg install hdf5 netcdf-c libssh --triplet x64-windows-release --binarysource="clear;x-gha,readwrite"
+          vcpkg install --triplet x64-windows-release --binarysource="clear;x-gha,readwrite"
           ls C:/vcpkg/packages
           ls C:/vcpkg/packages/hdf5_x64-windows-release/bin
 
