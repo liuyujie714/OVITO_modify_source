@@ -54,6 +54,7 @@ jobs:
             git submodule update --init --recursive
             # delete noexist .cpp
             sed -i '98,280d' src/main/CMakeLists.txt
+            sed -i 's/CMAKE_MINIMUM_REQUIRED(VERSION 3.25.0 FATAL_ERROR)/CMAKE_MINIMUM_REQUIRED(VERSION 3.19.8 FATAL_ERROR)/' CMakeLists.txt
             cd ..
             mv m-ovito ovito-v${{env.ovito_version}}
             
@@ -99,7 +100,7 @@ jobs:
 
       - name: Download dependencies
         run: |
-          pip install numpy scipy cmake==3.25.0
+          pip install numpy scipy cmake==3.19.8
           vcpkg install --triplet x64-windows-release --binarysource="clear;x-gha,readwrite"
           ls C:/vcpkg/packages
           ls C:/vcpkg/packages/hdf5_x64-windows-release/bin
