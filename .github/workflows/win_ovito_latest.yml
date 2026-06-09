@@ -167,7 +167,7 @@ jobs:
           Copy-Item -Path "$env:PYTHONHOME\DLLs"                     -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Recurse -Force
           Copy-Item -Path "$env:PYTHONHOME\Lib"                      -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Recurse -Force
           Copy-Item -Path "$env:PYTHONHOME\python.exe"               -Destination C:\OVITO_${{ env.ovito_version }}_Win\ovitos.exe -Force
-          Copy-Item -Path "C:\vcpkg\packages\hdf5_x64-windows-release\bin\hdf5_hl.dll" -Destination C:\OVITO_${{ env.ovito_version }}_Win-Force
+          Copy-Item -Path "C:\vcpkg\packages\hdf5_x64-windows-release\bin\hdf5_hl.dll" -Destination C:\OVITO_${{ env.ovito_version }}_Win -Force
           Copy-Item -Path "C:\vcpkg\packages\hdf5_x64-windows-release\bin\hdf5.dll"    -Destination C:\OVITO_${{ env.ovito_version }}_Win -Force
       
       - name: test Ovito
