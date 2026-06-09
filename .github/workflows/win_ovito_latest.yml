@@ -34,18 +34,18 @@ jobs:
             ## use git for external zstd, get ovito folder
             #git clone --branch dev${{env.ovito_version}} --recursive https://gitlab.com/stuko/ovito.git
 
-            # m-ovito to 3.0.0
+            # m-ovito to 3.15.0
             git clone --recursive https://github.com/blualg/m-ovito.git
             cd m-ovito
-            git checkout 0712553
+            git checkout main
             git submodule update --init --recursive
-            #sed -i '98,280d' src/main/CMakeLists.txt
+            # delete noexist .cpp
+            sed -i '98,280d' src/main/CMakeLists.txt
             cd ..
             mv m-ovito ovito-v${{env.ovito_version}}
             
             #fix zlib1 name
             # sed -i 's/zlib\.dll/z.dll/g' ovito-v${{env.ovito_version}}/src/ovito/core/CMakeLists.txt
-
             # download win64 for manual
             curl -O https://www.ovito.org/download/master/ovito-basic-${{env.ovito_version}}-win64.zip
             unzip ovito-basic-${{env.ovito_version}}-win64.zip -d win64_temp
@@ -142,6 +142,8 @@ jobs:
           Copy-Item -Path C:\${{env.ffpmeg_version}}\bin\avdevice-61.dll   -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
           Copy-Item -Path C:\${{env.ffpmeg_version}}\bin\postproc-58.dll   -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
           Copy-Item -Path C:\vcpkg\packages\curl_x64-windows-release\bin\libcurl.dll   -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path "$env:PYTHONHOME\python.dll"               -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path "$env:PYTHONHOME\python312.dll"            -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
 
       - name: test Ovito
         run: |
@@ -181,7 +183,6 @@ jobs:
           echo "TIME=$(date -u '+%Y.%m.%d')" >> $GITHUB_ENV
           echo "GITHUB_USER=$( echo ${{ github.repository }} | cut -d/ -f1 )" >> $GITHUB_ENV
           echo "GITHUB_REPO=$( echo ${{ github.repository }} | cut -d/ -f2 )" >> $GITHUB_ENV
-
       - name: Move/Create continuous tag
         run: |
           git tag --force ${{ env.RELEASE_TAG }} ${{ github.sha }}
