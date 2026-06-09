@@ -57,6 +57,8 @@ jobs:
             #rm static zstd
             sed -i.bak 's/IF(NOT OVITO_BUILD_CONDA)/IF(OVITO_BUILD_CONDA)/' src/3rdparty/CMakeLists.txt
             sed -i.bak '/# Also activate support for zstd compressed files./, /TARGET_SOURCES(Core PRIVATE ${ZSTD_ZLIBWRAPPER_SOURCES})/d' src/ovito/core/CMakeLists.txt   
+            # avoid popup to above
+            sed -i '/\/\/ If popup would extend below screen, show it above the anchor/,+3d' src/ovito/gui/desktop/mainwin/cmdpanel/ActionCardsPopup.cpp
             cd ..
             mv m-ovito ovito-v${{env.ovito_version}}
             
