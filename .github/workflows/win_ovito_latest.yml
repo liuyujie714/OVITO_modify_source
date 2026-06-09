@@ -124,7 +124,6 @@ jobs:
           -DOVITO_BUILD_SSH_CLIENT=ON  `
           -DOVITO_BUILD_PLUGIN_PYSCRIPT=ON `
           -Dpybind11_DIR="$pybind11_dir" `
-          -DOVITO_BUILD_MONOLITHIC=ON `
           -DHDF5_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5.lib" `
           -DHDF5_HL_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5_hl.lib" `
           -DHDF5_INCLUDE_DIR="C:/vcpkg/packages/hdf5_x64-windows-release/include" `
@@ -161,7 +160,7 @@ jobs:
           Copy-Item -Path "$env:PYTHONHOME\python312.dll"            -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
           Copy-Item -Path "$env:PYTHONHOME\DLLs"                     -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Recurse -Force
           Copy-Item -Path "$env:PYTHONHOME\Lib"                      -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Recurse -Force
-
+          Copy-Item -Path "$env:PYTHONHOME\python.exe"               -Destination "C:\OVITO_${env.ovito_version}_Win\ovitos.exe" -Force
       - name: test Ovito
         run: |
           dumpbin /dependents C:\OVITO_${{ env.ovito_version }}_Win\ovito.exe
