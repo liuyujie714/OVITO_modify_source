@@ -58,7 +58,7 @@ jobs:
             mv m-ovito ovito-v${{env.ovito_version}}
             
             #fix zlib1 name
-            # sed -i 's/zlib\.dll/z.dll/g' ovito-v${{env.ovito_version}}/src/ovito/core/CMakeLists.txt
+            sed -i 's/zlib\.dll/zlib1.dll/g' ovito-v${{env.ovito_version}}/src/ovito/core/CMakeLists.txt
             # download win64 for manual
             curl -O https://www.ovito.org/download/master/ovito-basic-${{env.ovito_version}}-win64.zip
             unzip ovito-basic-${{env.ovito_version}}-win64.zip -d win64_temp
@@ -131,7 +131,7 @@ jobs:
           -DBoost_LIBRARY_DIR="${{steps.boost.outputs.BOOST_ROOT}}\lib" `
           -DCMAKE_EXE_LINKER_FLAGS="/SUBSYSTEM:windows /ENTRY:mainCRTStartup" `
           -DOPENSSL_ROOT_DIR="C:\vcpkg\packages\openssl_x64-windows-release" `
-          -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\${{env.qt_version}}\msvc2022_64\lib\cmake;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" `
+          -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\${{env.qt_version}}\msvc2022_64\lib\cmake;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release;C:\vcpkg\packages\zlib_x64-windows-release" `
           -DFFMPEG_INCLUDE_DIR="C:\${{env.ffpmeg_version}}\include" `
           -DFFMPEG_LIBRARY_DIR="C:\${{env.ffpmeg_version}}\lib"
           ninja install -j4 || ninja install -j1
