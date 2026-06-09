@@ -27,7 +27,10 @@ jobs:
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
       - name: Setup vcpkg binary cache
-        run: echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $GITHUB_ENV
+        run: |
+            dir ${{env.PYTHONHOME}}
+            dir ${{env.PYTHONHOME}}\..
+            echo "VCPKG_BINARY_SOURCES=clear;x-gha,readwrite" >> $GITHUB_ENV
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -100,3 +103,129 @@ jobs:
           ls C:/vcpkg/packages
           ls C:/vcpkg/packages/hdf5_x64-windows-release/bin
 
+      - name: Configure build for amd64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+
+      - name: Build Ovito
+        shell: pwsh
+        env:
+          BOOST_ROOT: ${{ steps.boost.outputs.BOOST_ROOT }}
+        run: |
+          cd ovito-v${{env.ovito_version}} && md build && cd build
+          $pybind11_dir = "$GITHUB_WORKSPACE/ovito-v${{env.ovito_version}}/src/3rdparty/pybind11"
+          cmake .. `
+          -G Ninja `
+          -DCMAKE_BUILD_TYPE=Release `
+          -DCMAKE_INSTALL_PREFIX="C:\OVITO_${{ env.ovito_version }}_Win" `
+          -DOVITO_BUILD_PROFESSIONAL=ON  `
+          -DOVITO_BUILD_SSH_CLIENT=ON  `
+          -DOVITO_BUILD_PLUGIN_PYSCRIPT=ON `
+          -Dpybind11_DIR="$pybind11_dir" `
+          -DHDF5_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5.lib" `
+          -DHDF5_HL_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5_hl.lib" `
+          -DHDF5_INCLUDE_DIR="C:/vcpkg/packages/hdf5_x64-windows-release/include" `
+          -DBoost_INCLUDE_DIR="${{steps.boost.outputs.BOOST_ROOT}}\include" `
+          -DBoost_LIBRARY_DIR="${{steps.boost.outputs.BOOST_ROOT}}\lib" `
+          -DCMAKE_EXE_LINKER_FLAGS="/SUBSYSTEM:windows /ENTRY:mainCRTStartup" `
+          -DOPENSSL_ROOT_DIR="C:\vcpkg\packages\openssl_x64-windows-release" `
+          -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\${{env.qt_version}}\msvc2022_64\lib\cmake;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" `
+          -DFFMPEG_INCLUDE_DIR="C:\${{env.ffpmeg_version}}\include" `
+          -DFFMPEG_LIBRARY_DIR="C:\${{env.ffpmeg_version}}\lib"
+          ninja install -j4 || ninja install -j1
+             
+      - name: Copy plugins and dll
+        env:
+          QT_PATH_: C:\Qt6\Qt\${{env.qt_version}}\msvc2022_64
+        run: |
+          Copy-Item -Path ${{env.QT_PATH_}}\plugins                  -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Recurse -Force
+          Copy-Item -Path win64_temp\doc                             -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Recurse -Force
+          Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6Core.dll          -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6Gui.dll           -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6Network.dll       -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6DBus.dll          -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6OpenGL.dll        -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6OpenGLWidgets.dll -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6Svg.dll           -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6SvgWidgets.dll    -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6Widgets.dll       -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path ${{env.QT_PATH_}}\bin\Qt6Xml.dll           -Destination  C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path C:\vcpkg\packages\netcdf-c_x64-windows-release\bin\netcdf.dll   -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path C:\${{env.ffpmeg_version}}\bin\avdevice-61.dll   -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path C:\${{env.ffpmeg_version}}\bin\postproc-58.dll   -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path C:\vcpkg\packages\curl_x64-windows-release\bin\libcurl.dll   -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path "$env:PYTHONHOME\python.dll"               -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+          Copy-Item -Path "$env:PYTHONHOME\python312.dll"            -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
+
+      - name: test Ovito
+        run: |
+          dumpbin /dependents C:\OVITO_${{ env.ovito_version }}_Win\ovito.exe
+          C:\OVITO_${{ env.ovito_version }}_Win\ovito.exe --nogui
+          
+      - name: Upload Ovito
+        uses: actions/upload-artifact@v4
+        if: ${{ success() }}
+        with:
+          name: ovito_bins
+          path: C:\OVITO_${{ env.ovito_version }}_Win
+        
+
+  # refer to https://github.com/endless-sky/endless-sky/blob/master/.github/workflows/cd.yaml
+  Release:
+    needs: [Windows]
+    runs-on: ubuntu-latest
+
+    env:
+        RELEASE_COMMAND: release
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        RELEASE_TAG: bleed
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install github-release
+        run: |
+          go install github.com/github-release/github-release@latest
+          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+      
+      - name: Set environment variables
+        run: |
+          echo "RELEASE_TAG=bleed" >> $GITHUB_ENV
+          echo "TIME=$(date -u '+%Y.%m.%d')" >> $GITHUB_ENV
+          echo "GITHUB_USER=$( echo ${{ github.repository }} | cut -d/ -f1 )" >> $GITHUB_ENV
+          echo "GITHUB_REPO=$( echo ${{ github.repository }} | cut -d/ -f2 )" >> $GITHUB_ENV
+      - name: Move/Create continuous tag
+        run: |
+          git tag --force ${{ env.RELEASE_TAG }} ${{ github.sha }}
+          git push --tags --force
+      
+      - name: Check continuous release status
+        run: |
+          if ! github-release info -t ${{ env.RELEASE_TAG }} > /dev/null 2>&1; then
+            echo "RELEASE_COMMAND=release" >> $GITHUB_ENV
+          else
+            echo "RELEASE_COMMAND=edit" >> $GITHUB_ENV
+          fi
+      
+      - name: Setup continuous release
+        run: |
+          DESCRIPTION="Triggered on $(date -u '+%Y/%m/%d, %H:%M') UTC by commit ${{ github.sha }} (@${{ github.actor }})
+          This is an automated build of the latest source. It may be unstable or even crash, corrupt your save or eat your kitten. Use with caution!
+          https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          github-release ${{env.RELEASE_COMMAND}} --tag ${{ env.RELEASE_TAG }} --name "Bleed Release" --description "$DESCRIPTION" --pre-release
+      
+
+      - name: Download Windows artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ovito_bins
+
+      - name: Package Windows artifact to release
+        env:
+          OUTPUT_TAR: OVITO_Basic_${{ env.ovito_version }}_WinX64.tar.gz
+        run: |
+          ls -alt
+          tar -czvf ${{env.OUTPUT_TAR}} *.dll *.exe plugins doc
+          github-release upload --tag ${{ env.RELEASE_TAG }} --replace --name ${{env.OUTPUT_TAR}} --file ${{env.OUTPUT_TAR}}
