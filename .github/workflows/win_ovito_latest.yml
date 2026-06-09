@@ -99,6 +99,7 @@ jobs:
 
       - name: Download dependencies
         run: |
+          pip install numpy scipy
           vcpkg install hdf5 netcdf-c libssh --triplet x64-windows-release --binarysource="clear;x-gha,readwrite"
           ls C:/vcpkg/packages
           ls C:/vcpkg/packages/hdf5_x64-windows-release/bin
@@ -123,6 +124,7 @@ jobs:
           -DOVITO_BUILD_SSH_CLIENT=ON  `
           -DOVITO_BUILD_PLUGIN_PYSCRIPT=ON `
           -Dpybind11_DIR="$pybind11_dir" `
+          -DOVITO_BUILD_MONOLITHIC=ON `
           -DHDF5_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5.lib" `
           -DHDF5_HL_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5_hl.lib" `
           -DHDF5_INCLUDE_DIR="C:/vcpkg/packages/hdf5_x64-windows-release/include" `
@@ -133,7 +135,6 @@ jobs:
           -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\${{env.qt_version}}\msvc2022_64\lib\cmake;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" `
           -DFFMPEG_INCLUDE_DIR="C:\${{env.ffpmeg_version}}\include" `
           -DFFMPEG_LIBRARY_DIR="C:\${{env.ffpmeg_version}}\lib"
-          ninja ovitos -j4 || ninja ovitos -j1
           ninja install -j4 || ninja install -j1
              
       - name: Copy plugins and dll
