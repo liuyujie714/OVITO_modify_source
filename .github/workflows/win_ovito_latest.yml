@@ -99,7 +99,7 @@ jobs:
 
       - name: Download dependencies
         run: |
-          pip install numpy scipy
+          pip install numpy scipy cmake==3.25.0
           vcpkg install --triplet x64-windows-release --binarysource="clear;x-gha,readwrite"
           ls C:/vcpkg/packages
           ls C:/vcpkg/packages/hdf5_x64-windows-release/bin
@@ -114,6 +114,7 @@ jobs:
         env:
           BOOST_ROOT: ${{ steps.boost.outputs.BOOST_ROOT }}
         run: |
+          cmake --version
           cd ovito-v${{env.ovito_version}} && md build && cd build
           $pybind11_dir = "$GITHUB_WORKSPACE/ovito-v${{env.ovito_version}}/src/3rdparty/pybind11"
           cmake .. `
