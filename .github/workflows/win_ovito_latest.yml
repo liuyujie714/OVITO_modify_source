@@ -56,6 +56,7 @@ jobs:
             sed -i '98,280d' src/main/CMakeLists.txt
             #rm static zstd
             sed -i.bak 's/IF(NOT OVITO_BUILD_CONDA)/IF(OVITO_BUILD_CONDA)/' src/3rdparty/CMakeLists.txt
+            sed -i.bak '/# Also activate support for zstd compressed files./, /TARGET_SOURCES(Core PRIVATE ${ZSTD_ZLIBWRAPPER_SOURCES})/d' src/ovito/core/CMakeLists.txt   
             cd ..
             mv m-ovito ovito-v${{env.ovito_version}}
             
