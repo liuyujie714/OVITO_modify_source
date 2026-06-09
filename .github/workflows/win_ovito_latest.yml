@@ -133,6 +133,7 @@ jobs:
           -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\${{env.qt_version}}\msvc2022_64\lib\cmake;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release" `
           -DFFMPEG_INCLUDE_DIR="C:\${{env.ffpmeg_version}}\include" `
           -DFFMPEG_LIBRARY_DIR="C:\${{env.ffpmeg_version}}\lib"
+          ninja ovitos -j4 || ninja ovitos -j1
           ninja install -j4 || ninja install -j1
              
       - name: Copy plugins and dll
