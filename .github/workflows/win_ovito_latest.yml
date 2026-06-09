@@ -54,7 +54,8 @@ jobs:
             git submodule update --init --recursive
             # delete noexist .cpp
             sed -i '98,280d' src/main/CMakeLists.txt
-            sed -i 's/CMAKE_MINIMUM_REQUIRED(VERSION 3.25.0 FATAL_ERROR)/CMAKE_MINIMUM_REQUIRED(VERSION 3.19.8 FATAL_ERROR)/' CMakeLists.txt
+            #rm static zstd
+            sed -i.bak 's/IF(NOT OVITO_BUILD_CONDA)/IF(OVITO_BUILD_CONDA)/' src/3rdparty/CMakeLists.txt
             cd ..
             mv m-ovito ovito-v${{env.ovito_version}}
             
@@ -100,7 +101,7 @@ jobs:
 
       - name: Download dependencies
         run: |
-          pip install numpy scipy cmake==3.19.8
+          pip install numpy scipy
           vcpkg install --triplet x64-windows-release --binarysource="clear;x-gha,readwrite"
           ls C:/vcpkg/packages
           ls C:/vcpkg/packages/hdf5_x64-windows-release/bin
@@ -125,7 +126,6 @@ jobs:
           -DOVITO_BUILD_PROFESSIONAL=ON  `
           -DOVITO_BUILD_SSH_CLIENT=ON  `
           -DOVITO_BUILD_PLUGIN_PYSCRIPT=ON `
-          -DOVITO_BUILD_MONOLITHIC=ON `
           -Dpybind11_DIR="$pybind11_dir" `
           -DHDF5_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5.lib" `
           -DHDF5_HL_LIBRARY="C:/vcpkg/packages/hdf5_x64-windows-release/lib/hdf5_hl.lib" `
