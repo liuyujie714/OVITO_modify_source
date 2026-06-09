@@ -118,6 +118,7 @@ jobs:
           cd ovito-v${{env.ovito_version}} && md build && cd build
           $pybind11_dir = "$GITHUB_WORKSPACE/ovito-v${{env.ovito_version}}/src/3rdparty/pybind11"
           cmake .. `
+          -G Ninja `
           -DCMAKE_BUILD_TYPE=Release `
           -DCMAKE_INSTALL_PREFIX="C:\OVITO_${{ env.ovito_version }}_Win" `
           -DOVITO_BUILD_PROFESSIONAL=ON  `
@@ -135,7 +136,7 @@ jobs:
           -DCMAKE_PREFIX_PATH="C:\Qt6\Qt\${{env.qt_version}}\msvc2022_64\lib\cmake;C:\vcpkg\packages\hdf5_x64-windows-release;C:\vcpkg\packages\netcdf-c_x64-windows-release;C:\vcpkg\packages\libssh_x64-windows-release;C:\vcpkg\packages\zlib_x64-windows-release" `
           -DFFMPEG_INCLUDE_DIR="C:\${{env.ffpmeg_version}}\include" `
           -DFFMPEG_LIBRARY_DIR="C:\${{env.ffpmeg_version}}\lib"
-          cmake --build . --target INSTALL --config Release -- "-maxCpuCount" "-p:CL_MPCount=4"
+          ninja install -j4 || ninja install -j1
              
       - name: Copy plugins and dll
         env:
