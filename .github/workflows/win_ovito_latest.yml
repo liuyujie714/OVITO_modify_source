@@ -160,7 +160,7 @@ jobs:
           Copy-Item -Path "$env:PYTHONHOME\python312.dll"            -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Force
           Copy-Item -Path "$env:PYTHONHOME\DLLs"                     -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Recurse -Force
           Copy-Item -Path "$env:PYTHONHOME\Lib"                      -Destination C:\OVITO_${{ env.ovito_version }}_Win\ -Recurse -Force
-          Copy-Item -Path "$env:PYTHONHOME\python.exe"               -Destination "C:\OVITO_${env.ovito_version}_Win\ovitos.exe" -Force
+          Copy-Item -Path "$env:PYTHONHOME\python.exe"               -Destination C:\OVITO_${{ env.ovito_version }}_Win\ovitos.exe -Force
       - name: test Ovito
         run: |
           dumpbin /dependents C:\OVITO_${{ env.ovito_version }}_Win\ovito.exe
