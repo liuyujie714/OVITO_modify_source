@@ -9,8 +9,8 @@ on:
 
 jobs:
   build-windows:
-    name: Build (Windows x64, MSVC 2019)
-    runs-on: windows-2019
+    name: Build (Windows x64, MSVC 2022)
+    runs-on: windows-2022
 
     env:
       DEPS_DIR: ${{ github.workspace }}\deps
@@ -61,7 +61,7 @@ jobs:
         if: steps.cache-deps.outputs.cache-hit != 'true'
         shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           mkdir %DEPS_DIR%\zlib-src
           cd %DEPS_DIR%\zlib-src
           curl -L https://github.com/madler/zlib/releases/download/v1.3.1/zlib131.zip -o zlib.zip
@@ -119,7 +119,7 @@ jobs:
         if: steps.cache-deps.outputs.cache-hit != 'true'
         shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           cd %DEPS_DIR%
           curl -L https://www.riverbankcomputing.com/static/Downloads/QScintilla/2.11.2/QScintilla_gpl-2.11.2.zip -o qscintilla.zip
           7z x qscintilla.zip -y
@@ -149,7 +149,7 @@ jobs:
         if: steps.cache-deps.outputs.cache-hit != 'true'
         shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           cd %DEPS_DIR%
           curl -L https://www.libssh.org/files/0.9/libssh-0.9.6.tar.xz -o libssh.tar.xz
           7z x libssh.tar.xz -y
@@ -179,7 +179,7 @@ jobs:
       - name: Configure CMake
         shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
 
           mkdir %BUILD_DIR%
           cd %BUILD_DIR%
@@ -217,7 +217,7 @@ jobs:
       - name: Build
         shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           cd %BUILD_DIR%
           nmake
 
@@ -227,7 +227,7 @@ jobs:
       - name: Package (ZIP + NSIS installer)
         shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           cd %BUILD_DIR%
           cpack
           cpack -G ZIP
