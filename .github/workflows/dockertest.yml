@@ -14,7 +14,7 @@ jobs:
           docker run --rm registry.gitlab.com/stuko/ovito/linux_build:latest bash -c "
             apt-get update && \
             git clone --recursive https://gitlab.com/stuko/ovito.git  && \
-            cd ovito && git checkout v3.14.1 && mkdir build && cd build && \
+            cd ovito && git checkout v3.10.6 && mkdir build && cd build && \
             cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../Install && \
             make install -j4
           "
