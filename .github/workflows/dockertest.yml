@@ -4,7 +4,7 @@ on:
     branches: [master]
 
 jobs:
-  build:
+  LinuxOvito:
     runs-on: ubuntu-latest
     
     steps:
@@ -13,6 +13,8 @@ jobs:
           docker pull registry.gitlab.com/stuko/ovito/linux_build:latest
           docker run --rm registry.gitlab.com/stuko/ovito/linux_build:latest bash -c "
             apt-get update && \
-            apt-get install -y gromacs && \
-            gmx --version
+            git clone --recursive https://gitlab.com/stuko/ovito.git  && \
+            git checkout v3.14.1 && cd ovito && mkdir build && cd build && \
+            cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../Install && \
+            make install -j4
           "
