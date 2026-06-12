@@ -8,20 +8,11 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v4
-      
-      # 构建镜像（基于你的 GitLab 镜像）
-      - name: Build image
+      - name: Pull and run
         run: |
-          docker build -t myapp:latest \
-            --build-arg BASE_IMAGE=registry.gitlab.com/stuko/ovito/linux_build:latest .
-      
-      # 测试：在容器里安装 GROMACS
-      - name: Install GROMACS and test
-        run: |
-          docker run --rm myapp:latest bash -c "
+          docker pull registry.gitlab.com/stuko/ovito/linux_build:latest
+          docker run --rm registry.gitlab.com/stuko/ovito/linux_build:latest bash -c "
             apt-get update && \
             apt-get install -y gromacs && \
             gmx --version
           "
-          
