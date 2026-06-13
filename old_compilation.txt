@@ -1,0 +1,56 @@
+git clone --recursive https://gitlab.com/stuko/ovito
+cd ovito
+# ovito 2.9.0-dev533
+git checkout 8aca5c09 
+
+# replace bug 
+cd src\ovito\core\utilities\io\video
+curl -O https://gitlab.com/stuko/ovito/-/raw/v3.14.1/src/ovito/core/utilities/io/video/VideoEncoder.h
+curl -O https://gitlab.com/stuko/ovito/-/raw/v3.14.1/src/ovito/core/utilities/io/video/VideoEncoder.cpp
+
+
+cmake .. -G Ninja ^ 
+         -DCMAKE_BUILD_TYPE=Release ^ 
+         -DCMAKE_INSTALL_PREFIX=..\release_install ^ 
+         -DOVITO_REDISTRIBUTABLE_PACKAGE=ON ^ 
+         -DCMAKE_PREFIX_PATH=D:\Qt\5.15.2\msvc2019_64;%USERPROFILE%\Desktop\ovito-deps\hdf5;%USERPROFILE%\Desktop\ovito-deps\libaec;%USERPROFILE%\Desktop\ovito-deps\netcdf\share\netcdf-c;%USERPROFILE%\Desktop\ovito-deps\ffmpeg-7.1-full_build-shared  ^ 
+         -DZLIB_INCLUDE_DIR=%USERPROFILE%\Desktop\ovito-deps\zlib-1.2.13\include ^ 
+         -DZLIB_LIBRARY=%USERPROFILE%\Desktop\ovito-deps\zlib-1.2.13\lib\zlib.lib ^ 
+         -Dnetcdf_DIR=%USERPROFILE%\Desktop\ovito-deps\netcdf ^ 
+         -DCMAKE_CXX_FLAGS="/I %USERPROFILE%\Desktop\ovito-deps\netcdf\include /EHsc" ^ 
+         -DNETCDF_INCLUDE_DIR=%USERPROFILE%\Desktop\ovito-deps\netcdf\include ^
+         -DNETCDF_LIBRARY=%USERPROFILE%\Desktop\ovito-deps\netcdf\lib\netcdf.lib ^
+         -DHDF5_LIBRARY=%USERPROFILE%\Desktop\ovito-deps\hdf5\lib\hdf5.lib ^ 
+         -DHDF5_HL_LIBRARY=%USERPROFILE%\Desktop\ovito-deps\hdf5\lib\hdf5_hl.lib ^ 
+         -DHDF5_INCLUDE_DIR=%USERPROFILE%\Desktop\ovito-deps\hdf5\include ^ 
+         -DLIBAV_INCLUDE_DIR=%USERPROFILE%\Desktop\ovito-deps\ffmpeg-7.1-full_build-shared\include ^ 
+         -DLIBAV_LIBRARY_DIR=%USERPROFILE%\Desktop\ovito-deps\ffmpeg-7.1-full_build-shared\bin ^ 
+         -DBOOST_INCLUDEDIR=E:\code_test\boost_1_71_0 ^ 
+         -DQSCINTILLA_INCLUDE_DIR=%USERPROFILE%\Desktop\ovito-deps\qscintilla\2.10.8 ^ 
+         -DQSCINTILLA_LIBRARY=%USERPROFILE%\Desktop\ovito-deps\qscintilla\2.10.8\qscintilla2_qt5.lib ^ 
+         -DOVITO_BUILD_DOCUMENTATION=ON ^ 
+         -DOVITO_BUILD_MONOLITHIC=ON ^ 
+         -DOVITO_BUILD_PLUGIN_VR=OFF ^ 
+         -DOVITO_DOUBLE_PRECISION_FP=ON ^ 
+         -DLIBSSH_INCLUDE_DIR=%USERPROFILE%\Desktop\ovito-deps\libssh\include ^ 
+         -DLIBSSH_LIBRARY=%USERPROFILE%\Desktop\ovito-deps\libssh\lib\ssh.lib ^ 
+         -DOPENSSL_ROOT_DIR=%USERPROFILE%\Desktop\ovito-deps\openssl ^ 
+         -DOVITO_BUILD_PLUGIN_OSPRAY=ON ^ 
+         -Dospray_DIR=%USERPROFILE%\Desktop\ovito-deps\ospray\lib\cmake\ospray-1.8.5 ^ 
+         -Dembree_DIR=%USERPROFILE%\Desktop\ovito-deps\embree-3.5.2 ^ 
+         -DTBB_ROOT=%USERPROFILE%\Desktop\ovito-deps\tbb ^ 
+         -DTBB_DIR=%USERPROFILE%\Desktop\ovito-deps\tbb ^
+         -DISPC_EXECUTABLE=%USERPROFILE%\Desktop\ovito-deps\ispc-1.10.0-win32\bin\ispc ^
+         -DXSLT_PROCESSOR=%USERPROFILE%\Desktop\ovito-deps\libxslt-1.1.26.win32\bin\xsltproc.exe ^
+         -DPYTHON_LIBRARY=%USERPROFILE%\Desktop\ovito-deps\python-3.8.5\libs\python38.lib ^
+         -DPYTHON_INCLUDE_DIR=%USERPROFILE%\Desktop\ovito-deps\python-3.8.5\include ^
+         -DPYTHON_EXECUTABLE=%USERPROFILE%\Desktop\ovito-deps\python-3.8.5\python.exe
+
+
+
+sed -i "s/netcdf.lib/C:\\\\Users\\\\liuyujie714\\\\Desktop\\\\ovito-deps\\\\netcdf\\\\lib\\\\netcdf.lib C:\\\\Users\\\\liuyujie714\\\\Desktop\\\\ovito-deps\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\*.lib  C:\\\\Users\\\\liuyujie714\\\\Desktop\\\\ovito-deps\\\\embree-3.5.2\\\\lib\\\\tbb.lib /g" build.ninja
+
+
+ninja -j4
+
+
