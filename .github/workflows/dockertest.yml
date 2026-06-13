@@ -1,20 +1,29 @@
-name: Use Docker Image in CI
+name: Linux
 on:
   push:
     branches: [master]
+
+env:
+  ovito_version: 3.15.4
 
 jobs:
   LinuxOvito:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Pull and run
+      - name: Requirements
         run: |
-          docker pull registry.gitlab.com/stuko/ovito/linux_build:latest
-          docker run --rm registry.gitlab.com/stuko/ovito/linux_build:latest bash -c "
-            apt-get update && \
-            git clone --recursive https://gitlab.com/stuko/ovito.git  && \
-            cd ovito && git checkout v3.10.6 && mkdir build && cd build && \
-            cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../Install && \
-            make install -j4
-          "
+          sudo apt-get update 
+          sudo apt-get install build-essential git cmake-curses-gui qt6-base-dev libqt6svg6-dev \
+          libboost-dev libavcodec-dev libavdevice-dev libavfilter-dev libavformat-dev \
+          libavutil-dev libswscale-dev libnetcdf-dev libhdf5-dev libhdf5-serial-dev \
+          libglu1-mesa-dev ninja-build libssh-dev python3-sphinx python3-sphinx-rtd-theme
+
+      - name: Build
+        run: |
+          git clone --recursive https://gitlab.com/stuko/ovito.git 
+          cd ovito && git checkout v${{env.ovito_version}} && mkdir build && cd build
+          cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../Install 
+          ninja install -j4
+      
+
