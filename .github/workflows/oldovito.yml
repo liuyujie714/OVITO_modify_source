@@ -23,7 +23,7 @@ jobs:
           choco install p7zip wget
           pip install ninja
           wget https://github.com/liuyujie714/OVITO_modify_source/releases/download/bleed/ovito-deps.7z
-          7z x ovito-deps.7z
+          7z x ovito-deps.7z -oovito-deps
           dir 
 
       - name: Install Qt ${{env.qt_version}}
