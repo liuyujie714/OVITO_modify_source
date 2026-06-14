@@ -73,12 +73,12 @@ jobs:
         env:
             BOOST_ROOT: ${{ steps.boost.outputs.BOOST_ROOT }}
         run: |
-          cd ovito
+          cd ovito && md build && cd build
           cmake .. -G Ninja ^ 
           -DCMAKE_BUILD_TYPE=Release ^ 
           -DCMAKE_INSTALL_PREFIX=${{env.ovito_compile_to}} ^ 
           -DOVITO_REDISTRIBUTABLE_PACKAGE=ON ^ 
-          -DCMAKE_PREFIX_PATH=C:\Qt\Qt\${{env.qt_version}}\msvc2019_64;%cd%\ovito-deps\hdf5;%cd%\ovito-deps\libaec;%cd%\ovito-deps\netcdf\share\netcdf-c%cd%\ovito-deps\ffmpeg-7.1-full_build-shared  ^ 
+          -DCMAKE_PREFIX_PATH=${{env.QT_ROOT_DIR}};%cd%\ovito-deps\hdf5;%cd%\ovito-deps\libaec;%cd%\ovito-deps\netcdf\share\netcdf-c%cd%\ovito-deps\ffmpeg-7.1-full_build-shared  ^ 
           -DZLIB_INCLUDE_DIR=%cd%\ovito-deps\zlib-1.2.13\include ^ 
           -DZLIB_LIBRARY=%cd%\ovito-deps\zlib-1.2.13\lib\zlib.lib ^ 
           -Dnetcdf_DIR=%cd%\ovito-deps\netcdf ^ 
