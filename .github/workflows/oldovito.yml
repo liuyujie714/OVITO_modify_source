@@ -63,7 +63,7 @@ jobs:
           # fix video encoder & netcdf
           tag=$(git describe --tags --abbrev=0); version=${tag#v}; major=$(echo "$version"|cut -d. -f1); minor=$(echo "$version"|cut -d. -f2); patch=$(echo "$version"|cut -d. -f3); minor=${minor:-0}; patch=${patch:-0}; version_num=$((major*10000 + minor*100 + patch))
           if [[ $version_num -lt 30000 ]]; then
-            sed -i '/OVITO_INSTALL_DLL("${NETCDF_DLL_LOCATION}")/d'  ${{ github.workspace }}/ovito/src/3rdparty/netcdf_integration/CMakeLists.txt
+            sed -i '/OVITO_INSTALL_DLL("${NETCDF_DLL_LOCATION}")/d'  src/3rdparty/netcdf_integration/CMakeLists.txt
             cd src/ovito/core/utilities/io/video
             curl -O https://gitlab.com/stuko/ovito/-/raw/v3.14.1/src/ovito/core/utilities/io/video/VideoEncoder.h
             curl -O https://gitlab.com/stuko/ovito/-/raw/v3.14.1/src/ovito/core/utilities/io/video/VideoEncoder.cpp
