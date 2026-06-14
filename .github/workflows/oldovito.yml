@@ -1,0 +1,130 @@
+name: Build Windows x64 Ovito Basic
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  git_version: "8aca5c09"
+  qt_version: "5.15.2"
+  ovito_compile_to: C:\
+
+jobs:
+  Windows:
+    runs-on: windows-2022
+    if: github.event.repository.owner.id == github.event.sender.id
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Download dependencies
+        run: |
+          choco install p7zip wget
+          pip install ninja
+          wget https://github.com/liuyujie714/OVITO_modify_source/releases/download/bleed/ovito-deps.7z
+          7z x ovito-deps.7z
+          dir 
+
+      - name: Install Qt ${{env.qt_version}}
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: ${{env.qt_version}}
+          host: 'windows'
+          target: 'desktop'
+          arch: 'win64_msvc2019_64'
+          dir: C:\Qt
+          install-deps: 'true'
+          modules: 'qtcharts qtwebengine'
+          archives: 'qtbase qtsvg'
+          cache: 'false'
+          cache-key-prefix: 'install-qt-action'
+
+      - name: Install boost
+        uses: MarkusJx/install-boost@v2.4.4
+        id: boost
+        with:
+            boost_version: 1.72.0
+            platform_version: 2019
+            # install to C:\boost
+            boost_install_dir: C:\
+
+      - name: Configure build for amd64
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
+          toolset: 14.29
+
+      - name: Get ovito source
+        shell: bash
+        run: |
+          git clone --recursive https://gitlab.com/stuko/ovito
+          cd ovito && git checkout ${{ env.git_version }}
+          # fix video encoder
+          tag=$(git describe --tags --abbrev=0); version=${tag#v}; major=$(echo "$version"|cut -d. -f1); minor=$(echo "$version"|cut -d. -f2); patch=$(echo "$version"|cut -d. -f3); minor=${minor:-0}; patch=${patch:-0}; version_num=$((major*10000 + minor*100 + patch))
+          if [[ $version_num -lt 30000 ]]; then
+            cd src/ovito/core/utilities/io/video
+            curl -O https://gitlab.com/stuko/ovito/-/raw/v3.14.1/src/ovito/core/utilities/io/video/VideoEncoder.h
+            curl -O https://gitlab.com/stuko/ovito/-/raw/v3.14.1/src/ovito/core/utilities/io/video/VideoEncoder.cpp
+          fi
+
+      - name: Build ovito
+        shell: cmd
+        env:
+            BOOST_ROOT: ${{ steps.boost.outputs.BOOST_ROOT }}
+        run: |
+          cd ovito
+          cmake .. -G Ninja ^ 
+          -DCMAKE_BUILD_TYPE=Release ^ 
+          -DCMAKE_INSTALL_PREFIX=${{env.ovito_compile_to}} ^ 
+          -DOVITO_REDISTRIBUTABLE_PACKAGE=ON ^ 
+          -DCMAKE_PREFIX_PATH=C:\Qt\Qt\${{env.qt_version}}\msvc2019_64;%cd%\ovito-deps\hdf5;%cd%\ovito-deps\libaec;%cd%\ovito-deps\netcdf\share\netcdf-c%cd%\ovito-deps\ffmpeg-7.1-full_build-shared  ^ 
+          -DZLIB_INCLUDE_DIR=%cd%\ovito-deps\zlib-1.2.13\include ^ 
+          -DZLIB_LIBRARY=%cd%\ovito-deps\zlib-1.2.13\lib\zlib.lib ^ 
+          -Dnetcdf_DIR=%cd%\ovito-deps\netcdf ^ 
+          -DCMAKE_CXX_FLAGS="/I %cd%\ovito-deps\netcdf\include /EHsc" ^ 
+          -DNETCDF_INCLUDE_DIR=%cd%\ovito-deps\netcdf\include ^
+          -DNETCDF_LIBRARY=%cd%\ovito-deps\netcdf\lib\netcdf.lib ^
+          -DHDF5_LIBRARY=%cd%\ovito-deps\hdf5\lib\hdf5.lib ^ 
+          -DHDF5_HL_LIBRARY=%cd%\ovito-deps\hdf5\lib\hdf5_hl.lib ^ 
+          -DHDF5_INCLUDE_DIR=%cd%\ovito-deps\hdf5\include ^ 
+          -DLIBAV_INCLUDE_DIR=%cd%\ovito-deps\ffmpeg-7.1-full_build-shared\include ^ 
+          -DLIBAV_LIBRARY_DIR=%cd%\ovito-deps\ffmpeg-7.1-full_build-shared\bin ^ 
+          -DBoost_INCLUDE_DIR="${{steps.boost.outputs.BOOST_ROOT}}\include" ^ 
+          -DBoost_LIBRARY_DIR="${{steps.boost.outputs.BOOST_ROOT}}\lib" ^
+          -DQSCINTILLA_INCLUDE_DIR=%cd%\ovito-deps\qscintilla\2.10.8 ^ 
+          -DQSCINTILLA_LIBRARY=%cd%\ovito-deps\qscintilla\2.10.8\qscintilla2_qt5.lib ^ 
+          -DOVITO_BUILD_DOCUMENTATION=ON ^ 
+          -DOVITO_BUILD_MONOLITHIC=ON ^ 
+          -DOVITO_BUILD_PLUGIN_VR=OFF ^ 
+          -DOVITO_DOUBLE_PRECISION_FP=ON ^ 
+          -DLIBSSH_INCLUDE_DIR=%cd%\ovito-deps\libssh\include ^ 
+          -DLIBSSH_LIBRARY=%cd%\ovito-deps\libssh\lib\ssh.lib ^ 
+          -DOPENSSL_ROOT_DIR=%cd%\ovito-deps\openssl ^ 
+          -DOVITO_BUILD_PLUGIN_OSPRAY=ON ^ 
+          -Dospray_DIR=%cd%\ovito-deps\ospray\lib\cmake\ospray-1.8.5 ^ 
+          -Dembree_DIR=%cd%\ovito-deps\embree-3.5.2 ^ 
+          -DTBB_ROOT=%cd%\ovito-deps\tbb ^ 
+          -DTBB_DIR=%cd%\ovito-deps\tbb ^
+          -DISPC_EXECUTABLE=%cd%\ovito-deps\ispc-1.10.0-win32\bin\ispc ^
+          -DXSLT_PROCESSOR=%cd%\ovito-deps\libxslt-1.1.26.win32\bin\xsltproc.exe ^
+          -DPYTHON_LIBRARY=%cd%\ovito-deps\python-3.8.5\libs\python38.lib ^
+          -DPYTHON_INCLUDE_DIR=%cd%\ovito-deps\python-3.8.5\include ^
+          -DPYTHON_EXECUTABLE=%cd%\ovito-deps\python-3.8.5\python.exe
+          # fix lib path
+          set DEPS=%cd%\ovito-deps
+          sed -i "s/netcdf.lib/%DEPS%\netcdf\lib\netcdf.lib %DEPS%\ffmpeg-7.1-full_build-shared\lib\*.lib %DEPS%\embree-3.5.2\lib\tbb.lib/g" build.ninja
+          # fix boost::exception issue
+          ninja install -j4 || ninja install -j1
+
+      - name: Copy dll
+        run: |
+          Copy-Item -Path .\ffmpeg-7.1-full_build-shared\lib\*.dll -Destination ${{env.ovito_compile_to}}
+          dir ${{env.ovito_compile_to}}
+          
+      - name: Upload Ovito
+        uses: actions/upload-artifact@v4
+        if: ${{ success() }}
+        with:
+          name: ovito_basic_${{env.git_version}}
+          path: ${{env.ovito_compile_to}}
