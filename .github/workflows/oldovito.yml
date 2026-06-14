@@ -120,7 +120,7 @@ jobs:
 
       - name: Copy dll
         run: |
-          Copy-Item -Path .\ffmpeg-7.1-full_build-shared\lib\*.dll -Destination ${{env.ovito_compile_to}}
+          Copy-Item -Path ovito-deps\ffmpeg-7.1-full_build-shared\lib\*.dll -Destination ${{env.ovito_compile_to}}
           dir ${{env.ovito_compile_to}}
           
       - name: Upload Ovito
