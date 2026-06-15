@@ -118,21 +118,21 @@ jobs:
           -DPYTHON_EXECUTABLE=${{ github.workspace }}\ovito-deps\python-3.8.5\python.exe
 
           REM copy some files
-          xcopy ${{ github.workspace }}\ovito-deps\python-3.8.5\DLLs                        .\   /E /I /H
-          xcopy ${{ github.workspace }}\ovito-deps\python-3.8.5\Lib                         .\   /E /I /H
-          xcopy ${{env.QT_ROOT_DIR}}\plugins                                                .\   /E /I /H
-          xcopy ${{ github.workspace }}\ext_dll\*.dll                                       .\   /E /I /H
-          xcopy ${{ github.workspace }}\ovito-deps\ffmpeg-7.1-full_build-shared\lib\*.dll   .\   /E /I /H
+          xcopy ${{ github.workspace }}\ovito-deps\python-3.8.5\DLLs                        .\   /E /I /H /Y
+          xcopy ${{ github.workspace }}\ovito-deps\python-3.8.5\Lib                         .\   /E /I /H /Y
+          xcopy ${{env.QT_ROOT_DIR}}\plugins                                                .\   /E /I /H /Y
+          xcopy ${{ github.workspace }}\ext_dll\*.dll                                       .\   /I /H /Y
+          xcopy ${{ github.workspace }}\ovito-deps\ffmpeg-7.1-full_build-shared\lib\*.dll   .\   /I /H /Y
 
           REM fix lib path
           set DEPS=D$:\\\\a\\\\OVITO_modify_source\\\\OVITO_modify_source\\\\ovito-deps
-          sed -i "s/netcdf\.lib/& %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avcodec.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avdevice.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avfilter.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avformat.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avutil.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\postproc.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\swresample.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\swscale.lib  %DEPS%\\\\embree-3.5.2\\\\lib\\\\tbb.lib /g" build.ninja
+          sed -i "s/netcdf\.lib/& %DEPS%\\\\netcdf\\\\lib\\\\netcdf.lib  %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avcodec.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avdevice.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avfilter.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avformat.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avutil.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\postproc.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\swresample.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\swscale.lib  %DEPS%\\\\embree-3.5.2\\\\lib\\\\tbb.lib /g" build.ninja
 
           ninja install -j4 || ninja install -j1
 
       - name: Copy dll
         run: |
-          xcopy ${{ github.workspace }}\ovito\build\*.dll  ${{env.ovito_compile_to}}\  /E /I /H
+          xcopy ${{ github.workspace }}\ovito\build\*.dll  ${{env.ovito_compile_to}}\  /I /H /Y
           dir ${{env.ovito_compile_to}}
           
       - name: Upload Ovito
