@@ -115,8 +115,8 @@ jobs:
           -DPYTHON_INCLUDE_DIR=${{ github.workspace }}\ovito-deps\python-3.8.5\include ^
           -DPYTHON_EXECUTABLE=${{ github.workspace }}\ovito-deps\python-3.8.5\python.exe
           REM fix lib path
-          set DEPS=D$:\\\\a\\\\OVITO_modify_source\\\\OVITO_modify_source\\\\ovito-deps
-          sed -i "s/netcdf.lib/%DEPS%\\\\netcdf\\\\lib\\\\netcdf.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\*.lib %DEPS%\\\\embree-3.5.2\\\\lib\\\\tbb.lib/g" build.ninja
+          REM set DEPS=D$:\\\\a\\\\OVITO_modify_source\\\\OVITO_modify_source\\\\ovito-deps
+          REM sed -i "s/netcdf.lib/%DEPS%\\\\netcdf\\\\lib\\\\netcdf.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\*.lib %DEPS%\\\\embree-3.5.2\\\\lib\\\\tbb.lib/g" build.ninja
           cat -n build.ninja | tail -n +2942 | head -n 20
           ninja install -j4 || ninja install -j1
 
