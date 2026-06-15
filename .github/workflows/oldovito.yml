@@ -55,7 +55,7 @@ jobs:
           arch: amd64
           toolset: 14.29
 
-      - name: Get ovito source
+      - name: Get ovito source -> git $${{env.git_version}}
         shell: bash
         run: |
           git clone --recursive https://gitlab.com/stuko/ovito
@@ -63,6 +63,9 @@ jobs:
           # fix video encoder & netcdf
           tag=$(git describe --tags --abbrev=0); version=${tag#v}; major=$(echo "$version"|cut -d. -f1); minor=$(echo "$version"|cut -d. -f2); patch=$(echo "$version"|cut -d. -f3); minor=${minor:-0}; patch=${patch:-0}; version_num=$((major*10000 + minor*100 + patch))
           if [[ $version_num -lt 30000 ]]; then
+            # fix header
+            sed -i '/#pragma once/a\#include <QPainterPath>' src/ovito/core/Core.h
+            sed -i '/#include <qglobal.h>/a\#include <QPainterPath>' src/3rdparty/qwt/qwt_global.h
             sed -i 's/netcdf IMPORTED_LOCATION_RELEASE/netCDF::netcdf IMPORTED_LOCATION_RELEASE/g' src/3rdparty/netcdf_integration/CMakeLists.txt
             cd src/ovito/core/utilities/io/video
             curl -O https://gitlab.com/stuko/ovito/-/raw/v3.14.1/src/ovito/core/utilities/io/video/VideoEncoder.h
@@ -116,7 +119,6 @@ jobs:
           REM fix lib path
           set DEPS=D$:\\\\a\\\\OVITO_modify_source\\\\OVITO_modify_source\\\\ovito-deps
           sed -i "s/netcdf\.lib/& %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avcodec.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avdevice.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avfilter.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avformat.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avutil.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\postproc.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\swresample.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\swscale.lib  %DEPS%\\\\embree-3.5.2\\\\lib\\\\tbb.lib /g" build.ninja
-          cat -n build.ninja | tail -n +2942 | head -n 20
           ninja install -j4 || ninja install -j1
 
       - name: Copy dll

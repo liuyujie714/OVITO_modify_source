@@ -13,12 +13,12 @@ cmake .. -G Ninja ^
          -DCMAKE_BUILD_TYPE=Release ^ 
          -DCMAKE_INSTALL_PREFIX=..\release_install ^ 
          -DOVITO_REDISTRIBUTABLE_PACKAGE=ON ^ 
-         -DCMAKE_PREFIX_PATH=D:\Qt\5.15.2\msvc2019_64;%USERPROFILE%\Desktop\ovito-deps\hdf5;%USERPROFILE%\Desktop\ovito-deps\libaec;%USERPROFILE%\Desktop\ovito-deps\netcdf\share\netcdf-c;%USERPROFILE%\Desktop\ovito-deps\ffmpeg-7.1-full_build-shared  ^ 
+         -DCMAKE_PREFIX_PATH=D:\Qt\5.15.2\msvc2019_64;%USERPROFILE%\Desktop\ovito-deps\hdf5;%USERPROFILE%\Desktop\ovito-deps\libaec;%USERPROFILE%\Desktop\ovito-deps\netcdf;%USERPROFILE%\Desktop\ovito-deps\ffmpeg-7.1-full_build-shared  ^ 
          -DZLIB_INCLUDE_DIR=%USERPROFILE%\Desktop\ovito-deps\zlib-1.2.13\include ^ 
          -DZLIB_LIBRARY=%USERPROFILE%\Desktop\ovito-deps\zlib-1.2.13\lib\zlib.lib ^ 
          -Dnetcdf_DIR=%USERPROFILE%\Desktop\ovito-deps\netcdf ^ 
          -DCMAKE_CXX_FLAGS="/I %USERPROFILE%\Desktop\ovito-deps\netcdf\include /EHsc" ^ 
-         -DNETCDF_INCLUDE_DIR=%USERPROFILE%\Desktop\ovito-deps\netcdf\include ^
+         -Dnetcdf_INCLUDE_DIRS=%USERPROFILE%\Desktop\ovito-deps\netcdf\include ^
          -DNETCDF_LIBRARY=%USERPROFILE%\Desktop\ovito-deps\netcdf\lib\netcdf.lib ^
          -DHDF5_LIBRARY=%USERPROFILE%\Desktop\ovito-deps\hdf5\lib\hdf5.lib ^ 
          -DHDF5_HL_LIBRARY=%USERPROFILE%\Desktop\ovito-deps\hdf5\lib\hdf5_hl.lib ^ 
@@ -46,9 +46,12 @@ cmake .. -G Ninja ^
          -DPYTHON_INCLUDE_DIR=%USERPROFILE%\Desktop\ovito-deps\python-3.8.5\include ^
          -DPYTHON_EXECUTABLE=%USERPROFILE%\Desktop\ovito-deps\python-3.8.5\python.exe
 
+# fix netcdf
+sed -i 's/netcdf IMPORTED_LOCATION_RELEASE/netCDF::netcdf IMPORTED_LOCATION_RELEASE/g' src/3rdparty/netcdf_integration/CMakeLists.txt
 
 
-sed -i "s/netcdf.lib/C:\\\\Users\\\\liuyujie714\\\\Desktop\\\\ovito-deps\\\\netcdf\\\\lib\\\\netcdf.lib C:\\\\Users\\\\liuyujie714\\\\Desktop\\\\ovito-deps\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\*.lib  C:\\\\Users\\\\liuyujie714\\\\Desktop\\\\ovito-deps\\\\embree-3.5.2\\\\lib\\\\tbb.lib /g" build.ninja
+set DEPS=D$:\\\\a\\\\OVITO_modify_source\\\\OVITO_modify_source\\\\ovito-deps
+sed -i "s/netcdf\.lib/& %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avcodec.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avdevice.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avfilter.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avformat.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avutil.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\postproc.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\swresample.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\swscale.lib  %DEPS%\\\\embree-3.5.2\\\\lib\\\\tbb.lib /g" build.ninja
 
 
 ninja -j4
