@@ -122,7 +122,7 @@ jobs:
           xcopy ${{ github.workspace }}\ovito-deps\python-3.8.5\Lib                         .\Lib\   /E /I /H /Y
           xcopy ${{env.QT_ROOT_DIR}}\plugins                                                .\plugins\   /E /I /H /Y
           xcopy ${{ github.workspace }}\ext_dll\*.dll                                       .\   /I /H /Y
-          xcopy ${{ github.workspace }}\ovito-deps\ffmpeg-7.1-full_build-shared\lib\*.dll   .\   /I /H /Y
+          xcopy ${{ github.workspace }}\ovito-deps\ffmpeg-7.1-full_build-shared\bin\*.dll   .\   /I /H /Y
 
           REM fix lib path
           set DEPS=D$:\\\\a\\\\OVITO_modify_source\\\\OVITO_modify_source\\\\ovito-deps
@@ -144,6 +144,7 @@ jobs:
         run: |
           xcopy ${{ github.workspace }}\ovito\build\*.dll  ${{env.ovito_compile_to}}\  /I /H /Y
           dir ${{env.ovito_compile_to}}
+          Remove-Item -Path "${{env.ovito_compile_to}}\*.lib" -Verbose
           
       - name: Upload Ovito
         uses: actions/upload-artifact@v4
