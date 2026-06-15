@@ -92,7 +92,7 @@ jobs:
           -DHDF5_HL_LIBRARY=${{ github.workspace }}\ovito-deps\hdf5\lib\hdf5_hl.lib ^
           -DHDF5_INCLUDE_DIR=${{ github.workspace }}\ovito-deps\hdf5\include ^
           -DLIBAV_INCLUDE_DIR=${{ github.workspace }}\ovito-deps\ffmpeg-7.1-full_build-shared\include ^
-          -DLIBAV_LIBRARY_DIR=${{ github.workspace }}\ovito-deps\ffmpeg-7.1-full_build-shared\lib ^
+          -DLIBAV_LIBRARY_DIR=${{ github.workspace }}\ovito-deps\ffmpeg-7.1-full_build-shared\bin ^
           -DBoost_INCLUDE_DIR="${{steps.boost.outputs.BOOST_ROOT}}\include" ^
           -DBoost_LIBRARY_DIR="${{steps.boost.outputs.BOOST_ROOT}}\lib" ^
           -DQSCINTILLA_INCLUDE_DIR=${{ github.workspace }}\ovito-deps\qscintilla\2.10.8 ^
@@ -116,7 +116,7 @@ jobs:
           -DPYTHON_EXECUTABLE=${{ github.workspace }}\ovito-deps\python-3.8.5\python.exe
           REM fix lib path
           set DEPS=D$:\\\\a\\\\OVITO_modify_source\\\\OVITO_modify_source\\\\ovito-deps
-          sed -i "s/netcdf.lib/&  %DEPS%\\\\embree-3.5.2\\\\lib\\\\tbb.lib /g" build.ninja
+          sed -i "s/netcdf.lib/& %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avcodec.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avdevice.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avfilter.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avformat.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avutil.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\postproc.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\swresample.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\swscale.lib  %DEPS%\\\\embree-3.5.2\\\\lib\\\\tbb.lib /g" build.ninja
           cat -n build.ninja | tail -n +2942 | head -n 20
           ninja install -j4 || ninja install -j1
 
