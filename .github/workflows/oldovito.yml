@@ -142,7 +142,9 @@ jobs:
 
       - name: Copy dll
         run: |
-          xcopy ${{ github.workspace }}\ovito\build\*.dll  ${{env.ovito_compile_to}}\  /I /H /Y
+          xcopy ${{ github.workspace }}\ovito\build\*.dll               ${{env.ovito_compile_to}}\        /I /H /Y
+          xcopy ${{ github.workspace }}\ovito-deps\python-3.8.5\DLLs    ${{env.ovito_compile_to}}\DLLs\   /E /I /H /Y
+          xcopy ${{ github.workspace }}\ovito-deps\python-3.8.5\Lib     ${{env.ovito_compile_to}}\Lib\    /E /I /H /Y
           dir ${{env.ovito_compile_to}}
           Remove-Item -Path "${{env.ovito_compile_to}}\*.lib" -Verbose
           
