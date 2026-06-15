@@ -116,7 +116,8 @@ jobs:
           -DPYTHON_EXECUTABLE=${{ github.workspace }}\ovito-deps\python-3.8.5\python.exe
           REM fix lib path
           set DEPS=${{ github.workspace }}\ovito-deps
-          sed -i "s/netcdf.lib/%DEPS%\netcdf\lib\netcdf.lib %DEPS%\ffmpeg-7.1-full_build-shared\lib\*.lib %DEPS%\embree-3.5.2\lib\tbb.lib/g" build.ninja
+          sed -i "s/netcdf.lib/%DEPS%\netcdf\\lib\\netcdf.lib %DEPS%\\ffmpeg-7.1-full_build-shared\\lib\\*.lib %DEPS%\\embree-3.5.2\\lib\\tbb.lib/g" build.ninja
+          cat -n build.ninja | tail -n +2942 | head -n 20
           ninja install -j4 || ninja install -j1
 
       - name: Copy dll
