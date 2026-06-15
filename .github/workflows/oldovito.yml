@@ -83,7 +83,7 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release ^
           -DCMAKE_INSTALL_PREFIX=${{env.ovito_compile_to}} ^
           -DOVITO_REDISTRIBUTABLE_PACKAGE=ON ^
-          -DCMAKE_PREFIX_PATH=${{env.QT_ROOT_DIR}};${{ github.workspace }}\ovito-deps\hdf5;${{ github.workspace }}\ovito-deps\libaec;${{ github.workspace }}\ovito-deps\netcdf;${{ github.workspace }}\ovito-deps\ffmpeg-7.1-full_build-shared  ^
+          -DCMAKE_PREFIX_PATH=${{env.QT_ROOT_DIR}};${{ github.workspace }}\ovito-deps\hdf5;${{ github.workspace }}\ovito-deps\libaec;${{ github.workspace }}\ovito-deps\netcdf\share\netcdf-c;${{ github.workspace }}\ovito-deps\ffmpeg-7.1-full_build-shared  ^
           -DZLIB_INCLUDE_DIR=${{ github.workspace }}\ovito-deps\zlib-1.2.13\include ^
           -DZLIB_LIBRARY=${{ github.workspace }}\ovito-deps\zlib-1.2.13\lib\zlib.lib ^
           -Dnetcdf_DIR=${{ github.workspace }}\ovito-deps\netcdf\share\netcdf-c ^
