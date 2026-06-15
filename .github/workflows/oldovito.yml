@@ -118,9 +118,9 @@ jobs:
           -DPYTHON_EXECUTABLE=${{ github.workspace }}\ovito-deps\python-3.8.5\python.exe
 
           REM copy some files
-          xcopy ${{ github.workspace }}\ovito-deps\python-3.8.5\DLLs                        .\   /E /I /H /Y
-          xcopy ${{ github.workspace }}\ovito-deps\python-3.8.5\Lib                         .\   /E /I /H /Y
-          xcopy ${{env.QT_ROOT_DIR}}\plugins                                                .\   /E /I /H /Y
+          xcopy ${{ github.workspace }}\ovito-deps\python-3.8.5\DLLs                        .\DLLs\   /E /I /H /Y
+          xcopy ${{ github.workspace }}\ovito-deps\python-3.8.5\Lib                         .\Lib\   /E /I /H /Y
+          xcopy ${{env.QT_ROOT_DIR}}\plugins                                                .\plugins\   /E /I /H /Y
           xcopy ${{ github.workspace }}\ext_dll\*.dll                                       .\   /I /H /Y
           xcopy ${{ github.workspace }}\ovito-deps\ffmpeg-7.1-full_build-shared\lib\*.dll   .\   /I /H /Y
 
