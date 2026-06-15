@@ -55,7 +55,7 @@ jobs:
           arch: amd64
           toolset: 14.29
 
-      - name: Get ovito source -> git $${{env.git_version}}
+      - name: Get ovito source -> git ${{env.git_version}}
         shell: bash
         run: |
           git clone --recursive https://gitlab.com/stuko/ovito
