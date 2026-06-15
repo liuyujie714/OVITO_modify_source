@@ -72,7 +72,7 @@ jobs:
             curl -O https://gitlab.com/stuko/ovito/-/raw/v3.14.1/src/ovito/core/utilities/io/video/VideoEncoder.cpp
           fi
 
-      - name: Build ovito
+      - name: Configure ovito
         shell: cmd
         env:
             BOOST_ROOT: ${{ steps.boost.outputs.BOOST_ROOT }}
@@ -127,8 +127,18 @@ jobs:
           REM fix lib path
           set DEPS=D$:\\\\a\\\\OVITO_modify_source\\\\OVITO_modify_source\\\\ovito-deps
           sed -i "s/netcdf\.lib/ %DEPS%\\\\netcdf\\\\lib\\\\netcdf.lib  %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avcodec.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avdevice.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avfilter.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avformat.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\avutil.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\postproc.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\swresample.lib %DEPS%\\\\ffmpeg-7.1-full_build-shared\\\\lib\\\\swscale.lib  %DEPS%\\\\embree-3.5.2\\\\lib\\\\tbb.lib /g" build.ninja
+      
+      - name: Build ovitos
+        run: |
+          cd ovito\build
+          ninja ovitos -j4 || ninja ovitos -j1
+          dir
 
+      - name: Build ovito
+        run: |
+          cd ovito\build
           ninja install -j4 || ninja install -j1
+          dir
 
       - name: Copy dll
         run: |
