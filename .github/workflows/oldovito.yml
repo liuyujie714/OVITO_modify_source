@@ -8,7 +8,7 @@ on:
 env:
   git_version: "8aca5c09"
   qt_version: "5.15.2"
-  ovito_compile_to: C:\ovito_win
+  ovito_compile_to: C:/ovito_win
 
 jobs:
   Windows:
@@ -141,12 +141,14 @@ jobs:
           dir
 
       - name: Copy dll
+        shell: bash
         run: |
-          xcopy ${{ github.workspace }}\ovito\build\*.dll               ${{env.ovito_compile_to}}\        /I /H /Y
-          xcopy ${{ github.workspace }}\ovito-deps\python-3.8.5\DLLs    ${{env.ovito_compile_to}}\DLLs\   /E /I /H /Y
-          xcopy ${{ github.workspace }}\ovito-deps\python-3.8.5\Lib     ${{env.ovito_compile_to}}\Lib\    /E /I /H /Y
-          dir ${{env.ovito_compile_to}}
-          Remove-Item -Path "${{env.ovito_compile_to}}\*.lib" -Verbose
+          rm -rf ${{env.ovito_compile_to}}/DLLs ${{env.ovito_compile_to}}/Lib
+          mv ${{ github.workspace }}/ovito/build/*.dll                ${{env.ovito_compile_to}}
+          mv ${{ github.workspace }}/ovito-deps/python-3.8.5/DLLs     ${{env.ovito_compile_to}}
+          mv ${{ github.workspace }}/ovito-deps/python-3.8.5/Lib      ${{env.ovito_compile_to}}
+          rm -rf ${{env.ovito_compile_to}}/*.lib
+          ls ${{env.ovito_compile_to}}
           
       - name: Upload Ovito
         uses: actions/upload-artifact@v4
