@@ -75,6 +75,7 @@ jobs:
         env:
             BOOST_ROOT: ${{ steps.boost.outputs.BOOST_ROOT }}
         run: |
+          cmake --version
           cd ovito && md build && cd build
           cmake .. -G Ninja ^
           -DCMAKE_BUILD_TYPE=Release ^
