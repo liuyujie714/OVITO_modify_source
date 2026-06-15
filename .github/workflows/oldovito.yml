@@ -21,7 +21,7 @@ jobs:
       - name: Download dependencies
         run: |
           choco install p7zip wget
-          pip install ninja cmake==3.23.1
+          pip install ninja cmake==3.25.0
           wget https://github.com/liuyujie714/OVITO_modify_source/releases/download/bleed/ovito-deps.7z
           7z x ovito-deps.7z -oovito-deps
           dir 
