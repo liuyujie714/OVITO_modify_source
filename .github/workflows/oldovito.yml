@@ -144,9 +144,9 @@ jobs:
         shell: bash
         run: |
           rm -rf ${{env.ovito_compile_to}}/DLLs ${{env.ovito_compile_to}}/Lib
-          mv ovito/build/*.dll                ${{env.ovito_compile_to}}
-          mv ovito-deps/python-3.8.5/DLLs     ${{env.ovito_compile_to}}
-          mv ovito-deps/python-3.8.5/Lib      ${{env.ovito_compile_to}}
+          cp -r ovito/build/*.dll                ${{env.ovito_compile_to}}
+          cp -r ovito-deps/python-3.8.5/DLLs     ${{env.ovito_compile_to}}
+          cp -r ovito-deps/python-3.8.5/Lib      ${{env.ovito_compile_to}}
           rm -rf ${{env.ovito_compile_to}}/*.lib
           ls ${{env.ovito_compile_to}}
           
