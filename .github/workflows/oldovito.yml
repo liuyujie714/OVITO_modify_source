@@ -151,8 +151,10 @@ jobs:
           ls ${{env.ovito_compile_to}}
           
       - name: Upload Ovito
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: ${{ success() }}
         with:
           name: ovito_basic_${{env.git_version}}
           path: ${{env.ovito_compile_to}}
+          include-hidden-files: true
+          
