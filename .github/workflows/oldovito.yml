@@ -6,7 +6,7 @@ on:
       - master
 
 env:
-  git_version: "36c0e5a3"
+  git_version: "8aca5c09"
   qt_version: "5.15.2"
   ovito_compile_to: C:/ovito_win
 
