@@ -66,7 +66,7 @@ jobs:
             # fix header
             sed -i '/#pragma once/a\#include <QPainterPath>' src/ovito/core/Core.h
             sed -i '/#include <qglobal.h>/a\#include <QPainterPath>' src/3rdparty/qwt/qwt_global.h
-            sed -i 's/netcdf IMPORTED_LOCATION_RELEASE/netCDF::netcdf IMPORTED_LOCATION_RELEASE/g' src/3rdparty/netcdf_integration/CMakeLists.txt
+            sed -E -i 's/netcdf IMPORTED_LOCATION_RELEASE|netcdf LOCATION/netCDF::netcdf IMPORTED_LOCATION_RELEASE/g' src/3rdparty/netcdf_integration/CMakeLists.txt
             cd src/ovito/core/utilities/io/video
             curl -O https://gitlab.com/stuko/ovito/-/raw/v3.14.1/src/ovito/core/utilities/io/video/VideoEncoder.h
             curl -O https://gitlab.com/stuko/ovito/-/raw/v3.14.1/src/ovito/core/utilities/io/video/VideoEncoder.cpp
