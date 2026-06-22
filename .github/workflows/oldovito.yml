@@ -21,7 +21,7 @@ jobs:
       - name: Download dependencies
         run: |
           choco install p7zip wget
-          pip install ninja cmake==3.18
+          pip install ninja
           wget https://github.com/liuyujie714/OVITO_modify_source/releases/download/bleed/ovito-deps.7z
           7z x ovito-deps.7z -oovito-deps
           dir 
@@ -66,7 +66,7 @@ jobs:
             # fix header
             sed -i '/#pragma once/a\#include <QPainterPath>' src/ovito/core/Core.h
             sed -i '/#include <qglobal.h>/a\#include <QPainterPath>' src/3rdparty/qwt/qwt_global.h
-            sed -E -i 's/netcdf IMPORTED_LOCATION_RELEASE|netcdf LOCATION/netCDF::netcdf IMPORTED_LOCATION_RELEASE/g' src/3rdparty/netcdf_integration/CMakeLists.txt
+            sed -i 's/ netcdf / netCDF::netcdf /g' src/3rdparty/netcdf_integration/CMakeLists.txt
             cd src/ovito/core/utilities/io/video
             curl -O https://gitlab.com/stuko/ovito/-/raw/v3.14.1/src/ovito/core/utilities/io/video/VideoEncoder.h
             curl -O https://gitlab.com/stuko/ovito/-/raw/v3.14.1/src/ovito/core/utilities/io/video/VideoEncoder.cpp
